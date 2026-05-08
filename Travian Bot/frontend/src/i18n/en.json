@@ -1,0 +1,115 @@
+{
+  "common": {
+    "loading": "Loading…",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "refresh": "Refresh",
+    "scrapeNow": "Scrape now",
+    "error": "Error",
+    "noResults": "No results"
+  },
+  "brand": {
+    "name": "Travian Bot"
+  },
+  "nav": {
+    "sections": {
+      "accounts": "Accounts",
+      "game": "Game"
+    },
+    "accounts": "Accounts",
+    "settings": "Settings",
+    "villages": "Villages",
+    "notes": "Notes",
+    "farmlists": "Farmlists",
+    "tasks": "Tasks",
+    "statistics": "Statistics",
+    "hero": "Hero",
+    "templates": "Templates",
+    "aiAnalysis": "AI Analysis",
+    "log": "Log",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar",
+    "noAccounts": "No accounts yet"
+  },
+  "settings": {
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "saveFailed": "Save failed",
+    "validation": {
+      "maxLessThanMin": "Max click delay must be greater than or equal to min click delay."
+    },
+    "appearance": {
+      "title": "Appearance",
+      "theme": "Theme",
+      "theme.light": "Light",
+      "theme.dark": "Dark",
+      "theme.system": "System",
+      "language": "Language",
+      "desktopNotifications": "Enable desktop notifications"
+    },
+    "humanization": {
+      "title": "Humanization",
+      "hint": "The bot inserts a uniform-random pause from this range before every browser click, keypress, and navigation. Fixed delays are the single easiest bot-detection signal — keep a range, don't collapse it to one value unless you're sure.",
+      "clickDelay": "Click delay (ms)",
+      "clickDelayHint": "Both bounds must be 1–{{max}} ms and max ≥ min.",
+      "min": "Min (ms)",
+      "max": "Max (ms)"
+    },
+    "scraping": {
+      "title": "Scraping",
+      "hint": "Controls how often the background scheduler refreshes data from the game. Shorter intervals mean fresher data but more network activity — pick values you'd be comfortable explaining to a human observer.",
+      "defaultCheck": "Default check interval (minutes)",
+      "defaultCheckHint": "Fallback applied to accounts that don't have their own per-account interval configured."
+    }
+  },
+  "statistics": {
+    "subtitle": "Weekly top-10 rankings for this server. One capture every hour while this page is open; use the tabs below to switch between PvP, PvE, Defense and Raiders.",
+    "pickAccount": "Pick an account on the Accounts page to see statistics.",
+    "tabsLabel": "Ranking category",
+    "captureNow": "Capture now",
+    "capturing": "Capturing…",
+    "latest": "Latest: {{when}}",
+    "previous": "Previous: {{when}}",
+    "noCapturesYet": "No captures yet.",
+    "range": "Range",
+    "hourOne": "1 hour",
+    "hoursN": "{{n}} hours",
+    "loadingHistory": "Loading history…",
+    "pointsOver": "{{n}} point(s) over the last {{hours}}h",
+    "noHistoryYet": "No history yet.",
+    "chartEmpty": "Not enough data yet — waiting for at least two captures.",
+    "columns": {
+      "player": "Player"
+    },
+    "errors": {
+      "loadFailed": "Failed to load statistics",
+      "captureFailed": "Capture failed"
+    },
+    "category": {
+      "pvp": {
+        "title": "PvP of the week",
+        "score": "Attack points",
+        "empty": "No data yet. Make sure the account is logged in, then click Capture now."
+      },
+      "pve": {
+        "title": "PvE of the week",
+        "score": "Attack points",
+        "empty": "No PvE data yet. Capture now once the account is logged in."
+      },
+      "defense": {
+        "title": "Defenders of the week",
+        "score": "Defense points",
+        "empty": "No defense data yet. Capture now once the account is logged in."
+      },
+      "raiders": {
+        "title": "Robbers of the week",
+        "score": "Resources raided",
+        "empty": "No raider data yet. Capture now once the account is logged in."
+      }
+    }
+  }
+}

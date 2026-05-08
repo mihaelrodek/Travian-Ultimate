@@ -1,0 +1,115 @@
+{
+  "common": {
+    "loading": "Učitavanje…",
+    "save": "Spremi",
+    "saving": "Spremanje…",
+    "saved": "Spremljeno",
+    "cancel": "Odustani",
+    "delete": "Obriši",
+    "refresh": "Osvježi",
+    "scrapeNow": "Skeniraj",
+    "error": "Greška",
+    "noResults": "Nema rezultata"
+  },
+  "brand": {
+    "name": "Travian Bot"
+  },
+  "nav": {
+    "sections": {
+      "accounts": "Računi",
+      "game": "Igra"
+    },
+    "accounts": "Računi",
+    "settings": "Postavke",
+    "villages": "Sela",
+    "notes": "Bilješke",
+    "farmlists": "Farm liste",
+    "tasks": "Zadaci",
+    "statistics": "Statistika",
+    "hero": "Heroj",
+    "templates": "Predlošci",
+    "aiAnalysis": "AI analiza",
+    "log": "Dnevnik",
+    "collapse": "Sakrij bočnu traku",
+    "expand": "Otvori bočnu traku",
+    "noAccounts": "Još nema računa"
+  },
+  "settings": {
+    "save": "Spremi",
+    "saving": "Spremanje…",
+    "saved": "Spremljeno",
+    "saveFailed": "Spremanje nije uspjelo",
+    "validation": {
+      "maxLessThanMin": "Maksimalno odgađanje klika mora biti veće ili jednako minimalnom."
+    },
+    "appearance": {
+      "title": "Izgled",
+      "theme": "Tema",
+      "theme.light": "Svijetla",
+      "theme.dark": "Tamna",
+      "theme.system": "Sustav",
+      "language": "Jezik",
+      "desktopNotifications": "Omogući desktop obavijesti"
+    },
+    "humanization": {
+      "title": "Humanizacija",
+      "hint": "Bot ubacuje slučajnu pauzu iz ovog raspona prije svakog klika, tipkanja i navigacije. Fiksne pauze su najlakši znak za detekciju bota — zadrži raspon, ne stavljaj istu vrijednost na obje granice.",
+      "clickDelay": "Odgađanje klika (ms)",
+      "clickDelayHint": "Obje granice moraju biti 1–{{max}} ms i maksimum ≥ minimum.",
+      "min": "Min (ms)",
+      "max": "Max (ms)"
+    },
+    "scraping": {
+      "title": "Skeniranje",
+      "hint": "Kontrolira koliko često pozadinski scheduler osvježava podatke iz igre. Kraći intervali znače svježije podatke, ali više mrežne aktivnosti — odaberi vrijednosti koje bi mogao opravdati ljudskom promatraču.",
+      "defaultCheck": "Zadani interval provjere (minute)",
+      "defaultCheckHint": "Rezerva koja se primjenjuje na račune bez vlastitog intervala."
+    }
+  },
+  "statistics": {
+    "subtitle": "Tjedne top-10 ljestvice za ovaj server. Jedno hvatanje svakih sat vremena dok je ova stranica otvorena; koristi kartice ispod za prebacivanje između PvP, PvE, Obrane i Pljačkaša.",
+    "pickAccount": "Odaberi račun na stranici Računi za prikaz statistike.",
+    "tabsLabel": "Kategorija ljestvice",
+    "captureNow": "Uhvati sad",
+    "capturing": "Hvatanje…",
+    "latest": "Najnovije: {{when}}",
+    "previous": "Prethodno: {{when}}",
+    "noCapturesYet": "Još nema hvatanja.",
+    "range": "Raspon",
+    "hourOne": "1 sat",
+    "hoursN": "{{n}} sati",
+    "loadingHistory": "Učitavanje povijesti…",
+    "pointsOver": "{{n}} točka(e) u zadnjih {{hours}}h",
+    "noHistoryYet": "Još nema povijesti.",
+    "chartEmpty": "Još nema dovoljno podataka — čekanje barem dva hvatanja.",
+    "columns": {
+      "player": "Igrač"
+    },
+    "errors": {
+      "loadFailed": "Učitavanje statistike nije uspjelo",
+      "captureFailed": "Hvatanje nije uspjelo"
+    },
+    "category": {
+      "pvp": {
+        "title": "PvP tjedna",
+        "score": "Napadački bodovi",
+        "empty": "Još nema podataka. Provjeri da je račun prijavljen, pa klikni Uhvati sad."
+      },
+      "pve": {
+        "title": "PvE tjedna",
+        "score": "Napadački bodovi",
+        "empty": "Još nema PvE podataka. Uhvati sad kad je račun prijavljen."
+      },
+      "defense": {
+        "title": "Branitelji tjedna",
+        "score": "Obrambeni bodovi",
+        "empty": "Još nema podataka o obrani. Uhvati sad kad je račun prijavljen."
+      },
+      "raiders": {
+        "title": "Pljačkaši tjedna",
+        "score": "Opljačkane sirovine",
+        "empty": "Još nema podataka o pljačkašima. Uhvati sad kad je račun prijavljen."
+      }
+    }
+  }
+}

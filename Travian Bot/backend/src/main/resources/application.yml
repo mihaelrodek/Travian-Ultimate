@@ -1,0 +1,28 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: travian-bot-backend
+
+  datasource:
+    # Defaults match docker-compose / .env so `mvn spring-boot:run` works out of the box.
+    # Override by exporting POSTGRES_* in your shell (or use direnv with the project's .env).
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5433}/${POSTGRES_DB:travian_bot}
+    username: ${POSTGRES_USER:travian}
+    password: ${POSTGRES_PASSWORD:travian}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+    open-in-view: false
+
+logging:
+  level:
+    com.travianbot: DEBUG

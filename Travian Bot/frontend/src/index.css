@@ -1,0 +1,2547 @@
+/*
+ * Theme tokens.
+ *
+ * The palette is split into three passes that cascade:
+ *   1. :root                      — light defaults.
+ *   2. @media (prefers-color-scheme: dark) — OS-preference dark mode (fires when
+ *      the user's GeneralSettings theme is SYSTEM, i.e. no data-theme attribute).
+ *   3. :root[data-theme="light"|"dark"] — explicit user override from Settings.
+ *
+ * Contrast targets (WCAG AA):
+ *   - body text on surface/bg        ≥ 7:1  (AAA where practical)
+ *   - muted/secondary on surface     ≥ 4.5:1
+ *   - accent text + link on surface  ≥ 4.5:1
+ *   - border visibility              ≥ 1.5:1 vs adjacent surface
+ *
+ * Aliases at the bottom of each block (--muted, --surface-2, --accent) exist
+ * because various components reference those names with no fallback — wiring
+ * them to the real tokens keeps everything theme-aware.
+ */
+:root {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  color-scheme: light dark;
+
+  /* Light — background & surfaces */
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --surface-muted: #eceff4;
+  --surface-elevated: #ffffff;
+
+  /* Light — sidebar is intentionally dark in both themes for brand consistency */
+  --sidebar-bg: #10141a;
+  --sidebar-text: #d4dae4;
+  --sidebar-text-muted: #8c95a3;
+  --sidebar-active-bg: #1f2633;
+  --sidebar-active-text: #ffffff;
+
+  /* Light — structure + text */
+  --border: #d6dae2;
+  --border-strong: #b9bfca;
+  --text: #0f1419;
+  --text-muted: #4b5462;
+
+  /* Light — accent ramp */
+  --primary: #1d5bd6;
+  --primary-hover: #1849ac;
+  --success: #147a3f;
+  --danger: #b81f1f;
+  --danger-hover: #981919;
+  --warning: #8a5a00;
+
+  /* Aliases used by older components (keep in sync with the block above) */
+  --muted: var(--text-muted);
+  --surface-2: var(--surface-muted);
+  --accent: var(--primary);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0e13;
+    --surface: #151a22;
+    --surface-muted: #1d2330;
+    --surface-elevated: #20283a;
+
+    --sidebar-bg: #07090d;
+    --sidebar-text: #d0d7e3;
+    --sidebar-text-muted: #8590a2;
+    --sidebar-active-bg: #1d2435;
+    --sidebar-active-text: #ffffff;
+
+    --border: #2e3644;
+    --border-strong: #3c4557;
+    --text: #f0f3f8;
+    --text-muted: #a6b0c0;
+
+    --primary: #5b95ff;
+    --primary-hover: #7aa9ff;
+    --success: #4ec37a;
+    --danger: #f26a6a;
+    --danger-hover: #ff8585;
+    --warning: #f5c94f;
+  }
+}
+
+/* Forced theme (user override from Settings). Higher specificity than :root alone,
+   so these win against the prefers-color-scheme media query above. */
+:root[data-theme="light"] {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --surface-muted: #eceff4;
+  --surface-elevated: #ffffff;
+  --sidebar-bg: #10141a;
+  --sidebar-text: #d4dae4;
+  --sidebar-text-muted: #8c95a3;
+  --sidebar-active-bg: #1f2633;
+  --sidebar-active-text: #ffffff;
+  --border: #d6dae2;
+  --border-strong: #b9bfca;
+  --text: #0f1419;
+  --text-muted: #4b5462;
+  --primary: #1d5bd6;
+  --primary-hover: #1849ac;
+  --success: #147a3f;
+  --danger: #b81f1f;
+  --danger-hover: #981919;
+  --warning: #8a5a00;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0b0e13;
+  --surface: #151a22;
+  --surface-muted: #1d2330;
+  --surface-elevated: #20283a;
+  --sidebar-bg: #07090d;
+  --sidebar-text: #d0d7e3;
+  --sidebar-text-muted: #8590a2;
+  --sidebar-active-bg: #1d2435;
+  --sidebar-active-text: #ffffff;
+  --border: #2e3644;
+  --border-strong: #3c4557;
+  --text: #f0f3f8;
+  --text-muted: #a6b0c0;
+  --primary: #5b95ff;
+  --primary-hover: #7aa9ff;
+  --success: #4ec37a;
+  --danger: #f26a6a;
+  --danger-hover: #ff8585;
+  --warning: #f5c94f;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+a { color: var(--primary); }
+.link { color: var(--primary); text-decoration: none; font-size: 0.9rem; }
+.link:hover { text-decoration: underline; }
+
+.muted { color: var(--text-muted); }
+
+/* ---------- Layout ---------- */
+
+.layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-width, 240px) 1fr;
+  min-height: 100vh;
+  transition: grid-template-columns 0.18s ease;
+}
+
+.layout__content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* so tables don't blow out the grid */
+}
+
+.layout__topbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.layout__main {
+  padding: 2rem;
+  /* Reserve room so the FloatingQueueBar doesn't hide the tail of any page's
+     scrolling content. Keep in sync with .floating-queue-bar's height. */
+  padding-bottom: 5.5rem;
+  flex: 1;
+  overflow: auto;
+}
+
+/* ---------- Sidebar ---------- */
+
+.sidebar {
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  padding: 1.5rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  transition: padding 0.18s ease;
+}
+
+.sidebar--collapsed { padding: 1rem 0.4rem; }
+
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0 0.75rem 1.25rem;
+  font-weight: 600;
+  color: var(--sidebar-active-text);
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+
+.sidebar--collapsed .sidebar__brand {
+  justify-content: center;
+  padding: 0 0 1rem;
+}
+
+.sidebar__collapse-btn {
+  align-self: flex-end;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--sidebar-text) 15%, transparent);
+  color: var(--sidebar-text-muted);
+  border-radius: 6px;
+  padding: 0.15rem 0.5rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  line-height: 1;
+  margin: 0 0.25rem 0.6rem;
+  font-family: inherit;
+}
+
+.sidebar__collapse-btn:hover {
+  color: var(--sidebar-active-text);
+  background: var(--sidebar-active-bg);
+}
+
+.sidebar--collapsed .sidebar__collapse-btn { align-self: center; }
+
+.sidebar__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.45rem;
+}
+
+.sidebar__section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: none;
+  color: var(--sidebar-text-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.55rem 0.75rem 0.25rem;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+
+.sidebar__section-header:hover { color: var(--sidebar-active-text); }
+
+.sidebar__section-chevron {
+  display: inline-block;
+  width: 0.7rem;
+  text-align: center;
+  transition: transform 0.15s ease;
+}
+
+.sidebar__section-chevron--open { transform: rotate(90deg); }
+
+.sidebar__section-divider {
+  height: 1px;
+  background: color-mix(in srgb, var(--sidebar-text) 15%, transparent);
+  margin: 0.55rem 0.5rem;
+}
+
+.sidebar__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar__brand-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar__brand-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+.sidebar__nav { display: flex; flex-direction: column; gap: 0.15rem; }
+
+.sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  color: var(--sidebar-text);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.sidebar__link:hover {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-active-text);
+}
+
+.sidebar__link--active {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-active-text);
+}
+
+.sidebar__icon {
+  width: 1rem;
+  text-align: center;
+  color: var(--sidebar-text-muted);
+}
+
+.sidebar__link--active .sidebar__icon { color: var(--primary); }
+
+.sidebar__sublist {
+  list-style: none;
+  margin: 0 0 0.25rem;
+  padding: 0 0 0.25rem 0.6rem;
+  border-left: 1px solid color-mix(in srgb, var(--sidebar-text) 15%, transparent);
+  margin-left: 1.1rem;
+}
+
+.sidebar__sublist .sidebar__link {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.sidebar__subicon {
+  width: 0.8rem;
+  color: var(--sidebar-text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.sidebar__subtext {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar__subhint {
+  padding: 0.4rem 0.6rem;
+  color: var(--sidebar-text-muted);
+  font-size: 0.8rem;
+}
+
+.sidebar__subhint--error { color: var(--danger); }
+
+/*
+ * Per-account rows. The active account is the one the rest of the app is
+ * scoped to (useCurrentAccount) — distinct from whatever /accounts/:id the
+ * URL happens to point at. We visually call that out with a green dot +
+ * accent and tone everything else down to neutral gray so the user can see
+ * at a glance which account is "the one being played" right now.
+ */
+.sidebar__account {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sidebar__account-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  border: 1px solid transparent;
+}
+
+.sidebar__account-dot--active {
+  background: #22c55e;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #22c55e 25%, transparent);
+}
+
+.sidebar__account-dot--inactive {
+  background: color-mix(in srgb, var(--sidebar-text) 35%, transparent);
+}
+
+/*
+ * Active-but-offline: the user picked this account as the scope but the
+ * backend has no open (logged-in) Playwright session for it. Red is
+ * deliberately saturated so the "active account needs attention" signal
+ * survives in the collapsed sidebar where only the dot is visible.
+ */
+.sidebar__account-dot--offline {
+  background: #ef4444;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #ef4444 25%, transparent);
+}
+
+.sidebar__account--active {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.sidebar__account--offline {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.sidebar__account-badge {
+  margin-left: auto;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #ef4444;
+  background: color-mix(in srgb, #ef4444 20%, transparent);
+  border-radius: 0.5rem;
+  padding: 0 0.35rem;
+  line-height: 1rem;
+}
+
+.sidebar__account--inactive {
+  color: color-mix(in srgb, var(--sidebar-text) 65%, transparent);
+}
+
+.sidebar__account--inactive:hover {
+  color: var(--sidebar-text);
+}
+
+/* Game section placeholder items — styled like nav links, inert (no route). */
+.sidebar__link--placeholder {
+  background: transparent;
+  border: none;
+  width: 100%;
+  font-family: inherit;
+  cursor: default;
+  color: var(--sidebar-text-muted);
+}
+
+.sidebar__link--placeholder:hover {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-active-text);
+}
+
+/* Collapsed state — center icons, hide labels & sublists (labels are conditionally rendered in TSX, but this defends against any stray text). */
+.sidebar--collapsed .sidebar__link {
+  justify-content: center;
+  padding: 0.55rem 0;
+}
+
+.sidebar--collapsed .sidebar__label,
+.sidebar--collapsed .sidebar__brand-label,
+.sidebar--collapsed .sidebar__sublist {
+  display: none;
+}
+
+/* ---------- Pages ---------- */
+
+.page__title {
+  font-size: 1.5rem;
+  margin: 0.25rem 0 0;
+  letter-spacing: -0.01em;
+}
+
+.page__subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.stack { display: flex; flex-direction: column; gap: 1.25rem; max-width: 880px; }
+
+/* Wider stack for content that benefits from breathing room across the full
+   content column — e.g. the Accounts screens, which were otherwise floating
+   in a lot of empty space on normal-sized monitors. Caps at 1600px so the
+   layout doesn't stretch absurdly on ultrawide displays. */
+.stack--wide { max-width: min(90%, 1600px); }
+
+/* Extra-wide variant — about 15% wider than .stack--wide. Used by the
+   Villages master-detail page where the right pane (3 tabs of dense
+   tiles + queue table) was visibly cramped at 1600px on a normal 16:9
+   monitor. The 95% cap keeps a sliver of body padding on ultrawide. */
+.stack--xwide { max-width: min(95%, 1860px); }
+
+/* ---------- Cards ---------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+.card--muted { background: var(--surface-muted); }
+.card__title { margin: 0 0 0.25rem; font-size: 1.05rem; }
+
+/* Header layout for cards whose title needs a right-aligned action — used by
+   the Villages master list to host the collapse handle next to the title. */
+.card__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.card__title-toggle {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.card__title-toggle:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--text);
+}
+.card__title-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ----------------------------------------------------------------------
+   Statistics 2x2 dashboard
+   ----------------------------------------------------------------------
+   Four equal tiles laid out as a 2-column grid. Each tile is a button so
+   the whole rectangle is the click target — opens the detail overlay for
+   that category. Collapses to a single column at narrow widths so the
+   tiles stay readable on a phone-sized window.
+   ---------------------------------------------------------------------- */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 900px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stats-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.08s ease;
+}
+.stats-tile:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+.stats-tile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.stats-tile:active {
+  transform: translateY(1px);
+}
+
+.stats-tile__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.stats-tile__title {
+  font-weight: 600;
+  font-size: 1rem;
+}
+.stats-tile__hint {
+  font-size: 0.78rem;
+}
+.stats-tile__chart {
+  /* Constrain so all four tiles align even when one has more y-range. */
+  min-height: 180px;
+}
+.stats-tile__leader {
+  font-size: 0.78rem;
+}
+
+/* ----------------------------------------------------------------------
+   Statistics detail overlay (click a tile to open)
+   ----------------------------------------------------------------------
+   Fixed full-screen backdrop with a centered panel. Capped width keeps the
+   chart legible on ultrawide; max-height + scroll handles long top-10
+   tables. Backdrop click closes; the panel stops propagation so clicks
+   inside the table don't dismiss the modal.
+   ---------------------------------------------------------------------- */
+
+.stats-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1.5rem;
+}
+
+.stats-overlay__panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  width: 100%;
+  max-width: 980px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+
+.stats-overlay__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.stats-overlay__title {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.stats-overlay__close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.stats-overlay__close:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--text);
+}
+.stats-overlay__close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.stats-overlay__table-wrap {
+  margin-top: 1rem;
+}
+
+/* ----------------------------------------------------------------------
+   AI Analysis dashboard
+   ----------------------------------------------------------------------
+   Mirrors the resource-tile colour palette used on the Buildings tab so
+   "wood / clay / iron / crop" reads consistently across the app. The
+   summary tiles are non-interactive — the per-tile detail lives in the
+   ranked table below.
+   ---------------------------------------------------------------------- */
+
+.ai-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+@media (max-width: 1100px) {
+  .ai-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .ai-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.ai-summary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+}
+
+.ai-summary__count {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.ai-summary__label {
+  font-size: 0.78rem;
+  margin-top: 0.15rem;
+}
+
+/* Type-coloured pill used in the ranked table — short, readable, distinct
+   per resource. Reuses the existing pill / resource-tile colour ramp. */
+.oasis-pill {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  letter-spacing: 0.02em;
+}
+.oasis-pill--wood   { color: #1f4f1f; background: color-mix(in srgb, #2e7d32 18%, var(--surface)); border-color: color-mix(in srgb, #2e7d32 35%, transparent); }
+.oasis-pill--clay   { color: #6d2d12; background: color-mix(in srgb, #c2410c 18%, var(--surface)); border-color: color-mix(in srgb, #c2410c 35%, transparent); }
+.oasis-pill--iron   { color: #2c333d; background: color-mix(in srgb, #5b6573 22%, var(--surface)); border-color: color-mix(in srgb, #5b6573 40%, transparent); }
+.oasis-pill--crop   { color: #6d4d00; background: color-mix(in srgb, #ca8a04 22%, var(--surface)); border-color: color-mix(in srgb, #ca8a04 40%, transparent); }
+.oasis-pill--mixed  { color: var(--text); background: var(--surface-muted); border-color: var(--border); }
+.oasis-pill--unknown { color: var(--text-muted); background: var(--surface-muted); border-color: var(--border); }
+
+@media (prefers-color-scheme: dark) {
+  .oasis-pill--wood   { color: #cfeacf; }
+  .oasis-pill--clay   { color: #f5cfb6; }
+  .oasis-pill--iron   { color: #d8dde6; }
+  .oasis-pill--crop   { color: #f3dca0; }
+}
+.card__hint { margin: 0 0 1rem; color: var(--text-muted); font-size: 0.9rem; }
+
+/* Thin divider to visually segment regions inside a single Card (e.g. action
+   toolbar vs. read-only details on AccountDetailPage) without splitting into
+   two Cards. Keeps the one-surface-per-page feel while still cueing the
+   "actions end, facts begin" transition. */
+.card__sep {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 1rem 0;
+}
+
+/* ---------- Forms ---------- */
+
+.form { display: flex; flex-direction: column; gap: 0.9rem; }
+
+/* Pair two (or more) form fields side-by-side on one row. Each child
+   .form__field flexes to share the available space. Collapses to a single
+   column below the narrow-layout breakpoint so inputs don't get cramped. */
+.form__row {
+  display: flex;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.form__row .form__field {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+/* Wrapper for form submit buttons so we can align them independent of the
+   form's vertical stack (e.g. center a compact Save button under a short
+   form instead of letting it stretch to the full column width). */
+.form__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.form__actions--center { justify-content: center; }
+.form__actions--end    { justify-content: flex-end; }
+
+.form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.form__field input,
+.form__field select,
+.form__field textarea {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form__field input:focus,
+.form__field select:focus,
+.form__field textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.form__field input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.form__field label {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.form__check {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.9rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.form__check input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.form__checkgroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  padding: 0.35rem 0;
+}
+
+/* Inline row layout used inside a .form__field — e.g. an input with a small
+   secondary label (or set of preset buttons) sitting right next to it. */
+.form__inline {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.form__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.form__msg {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  border: 1px solid transparent;
+}
+
+.form__msg--error {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+  color: var(--danger);
+}
+
+.form__msg--success {
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+  border-color: color-mix(in srgb, var(--success) 40%, transparent);
+  color: var(--success);
+}
+
+.form__msg pre {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  overflow: auto;
+}
+
+/* ---------- Buttons ---------- */
+
+.btn {
+  cursor: pointer;
+  padding: 0.6rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn:disabled { opacity: 0.65; cursor: not-allowed; }
+
+.btn--primary { background: var(--primary); color: #fff; }
+.btn--primary:hover:not(:disabled) { background: var(--primary-hover); }
+.btn--primary:active:not(:disabled) { transform: translateY(1px); }
+
+.btn--danger { background: var(--danger); color: #fff; }
+.btn--danger:hover:not(:disabled) { background: var(--danger-hover); }
+
+.btn--ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+}
+.btn--ghost:hover:not(:disabled) { background: var(--surface-muted); }
+
+.btn--sm { padding: 0.35rem 0.7rem; font-size: 0.8rem; }
+
+/* ---------- Status badge ---------- */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.status-badge__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+
+.status-badge--up { color: var(--success); border-color: color-mix(in srgb, var(--success) 40%, transparent); }
+.status-badge--up .status-badge__dot { background: var(--success); box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 25%, transparent); }
+.status-badge--down { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent); }
+.status-badge--down .status-badge__dot { background: var(--danger); }
+.status-badge--loading .status-badge__dot { animation: pulse 1.2s ease-in-out infinite; }
+.status-badge--idle { }
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* ---------- Table ---------- */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+  padding: 0.7rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  /* Long error messages and URLs would otherwise blow out the table width. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.table th {
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.table tr:last-child td { border-bottom: none; }
+.table tr:hover td { background: var(--surface-muted); }
+
+/* ---------- Pill ---------- */
+
+.pill {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.pill--success {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+  border-color: color-mix(in srgb, var(--success) 40%, transparent);
+}
+
+.pill--danger {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+.pill--neutral {
+  color: var(--text-muted);
+  background: var(--surface-muted);
+  border-color: var(--border);
+}
+
+/* "WARN" chip — used by the bot activity log for soft-failed actions
+   (deferred build, partial scrape). Uses the same --warning token as the
+   rest of the warn UI so the two match at a glance. */
+.pill--warn {
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+  border-color: color-mix(in srgb, var(--warning) 40%, transparent);
+}
+
+/*
+ * Pill status aliases — kept separate so new status surfaces can opt into
+ * an "info" / "error" / "muted" variant without re-deciding colour tokens.
+ * "info" reuses the primary accent so RUNNING rows in the build/troops queue
+ * feel active without shouting; "error" is a thin alias of danger; "muted"
+ * reuses the neutral tokens for cancelled or dormant items.
+ */
+.pill--info {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.pill--error {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+.pill--muted {
+  color: var(--text-muted);
+  background: var(--surface-muted);
+  border-color: var(--border);
+}
+
+/* ---------- Account detail ---------- */
+
+.account-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.account-header__title {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.account-header__server {
+  margin: 0.2rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.account-header__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem 1.5rem;
+  margin: 0;
+}
+
+.kv > div { display: flex; flex-direction: column; gap: 0.15rem; }
+
+.kv dt {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.kv dd { margin: 0; font-size: 0.9rem; }
+
+/* ---------- Schedule editor ---------- */
+
+.schedule { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.schedule__day {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.schedule__day-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.schedule__day-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  min-width: 2.25rem;
+}
+
+.schedule__day-summary {
+  flex: 1;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.schedule__day-actions {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.schedule__presets {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
+
+.schedule__presets-label {
+  font-size: 0.8rem;
+}
+
+.schedule__empty {
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.schedule__window {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.schedule__window input[type="time"] {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.schedule__dash {
+  color: var(--text-muted);
+}
+
+/* ---------- Settings sections ---------- */
+
+.settings-section {
+  border-top: 1px solid var(--border);
+  padding: 1rem 0 0.5rem;
+}
+.settings-section:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+.settings-section__title {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.settings-section__hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.settings-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* ---------- Settings save bar ---------- */
+
+.settings-savebar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  position: sticky;
+  bottom: 1rem;
+  box-shadow: 0 2px 10px color-mix(in srgb, #000 10%, transparent);
+}
+
+.settings-savebar__msg {
+  flex: 1;
+  font-size: 0.85rem;
+}
+
+/* ---------- Tabs ----------
+ * Used by VillageDetailPanel (Build / Troops / Settings) and any other host
+ * that wants the same visual treatment. The component writes `.tab` /
+ * `.tab--active` (NOT the BEM-style `.tabs__tab`), so keep these selectors in
+ * sync with the JSX — historically that mismatch silently reverted the tabs
+ * to browser defaults.
+ *
+ * Responsive behaviour: flex row up to the container width, then horizontal
+ * scroll on narrower viewports rather than wrapping — wrapping looks broken
+ * next to the tabs__panel below, and three tabs is few enough that scroll is
+ * rarely needed in practice.
+ */
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--border);
+  padding: 0 0.25rem;
+  /* Horizontal scroll on overflow; hide the scrollbar to avoid an ugly strip
+   * under the tab row — the swipe-to-scroll gesture still works. */
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.7rem 1.1rem;
+  cursor: pointer;
+  position: relative;
+  /* Sit exactly on top of the tabs' own 1px border — our --active underline
+   * replaces that section of the border so the transition feels continuous. */
+  top: 1px;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  border-radius: 6px 6px 0 0;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.tab:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: 6px 6px 0 0;
+}
+
+.tab--active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.tab--active:hover {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.tabs__panel {
+  padding-top: 1rem;
+  /* Keep the panel tall enough that switching between a 20-row queue and a
+   * 2-row troop list doesn't make the page jump. Arbitrary floor — the
+   * actual content stretches beyond this. */
+  min-height: 12rem;
+}
+
+/* Village master-detail container — the tabs live at the top of the right pane. */
+.village-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Narrow viewports: tighten padding so three tabs fit without scroll on
+ * phone-width screens. 720px is roughly where the master-detail layout
+ * collapses to a single column. */
+@media (max-width: 720px) {
+  .tab {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.88rem;
+  }
+
+  .tabs__panel {
+    padding-top: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab { transition: none; }
+}
+
+/* ---------- Page header (title + action button on the right) ---------- */
+
+.page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* ---------- Toolbar (filter bar above tables) ---------- */
+
+.toolbar {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.toolbar__label {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+}
+
+.toolbar select,
+.toolbar input {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+/* ---------- Standalone inputs inside tables ---------- */
+
+.table input[type="text"],
+.table input[type="number"],
+.table select {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  width: 100%;
+  min-width: 0;
+}
+
+.table input[type="text"]:focus,
+.table input[type="number"]:focus,
+.table select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.table input:disabled,
+.table select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ---------- Monospace helpers ---------- */
+
+.input--mono,
+.table .input--mono {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+}
+
+.textarea--mono {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.code-chip {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.05rem 0.4rem;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  color: var(--text);
+}
+
+/* ---------- Queue / targets table — lock column widths ---------- */
+
+.queue .table { table-layout: fixed; }
+.queue .table td { vertical-align: middle; }
+
+/*
+ * Status-tinted row backgrounds. Subtle — the goal is "I can find the
+ * running row at a glance", not "every row is shouty". Keep the hover state
+ * consistent so the table still feels interactive for edits.
+ */
+.queue .table tr.queue-row--running td {
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+.queue .table tr.queue-row--failed td {
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+}
+.queue .table tr.queue-row--done td {
+  background: color-mix(in srgb, var(--success) 6%, transparent);
+  opacity: 0.75;
+}
+.queue .table tr.queue-row--running:hover td,
+.queue .table tr.queue-row--failed:hover td,
+.queue .table tr.queue-row--done:hover td {
+  /* Defeat the generic tr:hover rule so our status tint doesn't flip to
+     the neutral --surface-muted on hover. */
+  background: inherit;
+}
+
+/* Drag-and-drop reorder visuals — same shape as the village list rows
+   on the Villages page so the gesture feels familiar. */
+.queue .table tr.queue-row--dragging td {
+  opacity: 0.5;
+}
+.queue .table tr.queue-row--drag-over td {
+  /* Top-edge indicator shows where the row will land on drop. Inline so
+     it stacks correctly with the status tint. */
+  box-shadow: inset 0 2px 0 0 var(--primary);
+}
+
+/*
+ * Inline progress bar shown under the "Finish" cell for RUNNING rows.
+ * Width is driven from a --progress custom property written by the editor.
+ */
+.queue-progress {
+  position: relative;
+  height: 4px;
+  margin-top: 0.25rem;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.queue-progress__bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--progress, 0%);
+  background: var(--accent);
+  transition: width 1s linear;
+}
+
+/*
+ * "Running" dot next to the status pill — pulses softly so it reads as
+ * "alive" without being annoying. Reduce-motion users get a static dot.
+ */
+.queue-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.queue-status__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent);
+  animation: queue-pulse 1.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .queue-status__dot { animation: none; }
+}
+@keyframes queue-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 40%, transparent); }
+  50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+
+.queue-finish {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.82rem;
+  line-height: 1.25;
+}
+.queue-finish__remaining {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.queue-finish__clock { color: var(--text-muted); font-size: 0.75rem; }
+
+/* ---------- Read-only build queue cells ----------
+ * The queue editor no longer has inline selects — these styles match the
+ * old input heights so RUNNING/PENDING rows still line up vertically when
+ * the user reorders.
+ */
+.queue-cell__name {
+  font-weight: 500;
+}
+
+.queue-cell__level {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.queue-actions {
+  display: inline-flex;
+  gap: 0.25rem;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+.queue-empty {
+  margin: 0;
+  padding: 0.6rem 0.25rem;
+}
+
+/* ---------- Scrape view: resource pills + badges ---------- */
+
+/*
+ * Resource pills — hardcoded to a resource-tinted palette rather than derived
+ * from tokens, because the wood/clay/iron/crop colors are brand-like game
+ * metaphors. Two variants kept in sync for light + dark themes, matching the
+ * same cascade order the main palette uses (default = light, @media dark
+ * overrides only when the user hasn't forced light).
+ */
+.resource-pill {
+  display: inline-block;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text);
+  white-space: nowrap;
+}
+.resource-pill--wood { background: #e8f1d6; color: #3d5618; border-color: #c9dca7; }
+.resource-pill--clay { background: #f5ddcc; color: #7a3a14; border-color: #e5bfa5; }
+.resource-pill--iron { background: #e1e5ec; color: #3a404b; border-color: #c3c9d3; }
+.resource-pill--crop { background: #f6e6b4; color: #6b4d0a; border-color: #e2cc82; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .resource-pill--wood { background: #2e3a1f; color: #d7e9b9; border-color: #4e6228; }
+  :root:not([data-theme="light"]) .resource-pill--clay { background: #4a2c1f; color: #f5cfb3; border-color: #6e432f; }
+  :root:not([data-theme="light"]) .resource-pill--iron { background: #2e313a; color: #d3d8e1; border-color: #4a4f5c; }
+  :root:not([data-theme="light"]) .resource-pill--crop { background: #4a3b12; color: #f6dc93; border-color: #6e591a; }
+}
+:root[data-theme="dark"] .resource-pill--wood { background: #2e3a1f; color: #d7e9b9; border-color: #4e6228; }
+:root[data-theme="dark"] .resource-pill--clay { background: #4a2c1f; color: #f5cfb3; border-color: #6e432f; }
+:root[data-theme="dark"] .resource-pill--iron { background: #2e313a; color: #d3d8e1; border-color: #4a4f5c; }
+:root[data-theme="dark"] .resource-pill--crop { background: #4a3b12; color: #f6dc93; border-color: #6e591a; }
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text);
+}
+.badge--running {
+  background: color-mix(in srgb, var(--primary) 20%, transparent);
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
+.row--muted td {
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface-muted) 40%, transparent);
+}
+
+.row--active td {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.scope-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0.85rem;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+.scope-banner--warn {
+  background: color-mix(in srgb, var(--danger, #b03a3a) 10%, transparent);
+  border-color: color-mix(in srgb, var(--danger, #b03a3a) 35%, transparent);
+}
+.scope-banner__label {
+  color: var(--text);
+}
+.scope-banner__label strong {
+  font-weight: 600;
+}
+
+.delta {
+  font-variant-numeric: tabular-nums;
+}
+.delta--up {
+  color: var(--success);
+}
+.delta--down {
+  color: var(--danger);
+}
+.delta--flat {
+  color: var(--muted);
+}
+
+/* ---------- Hero page ---------- */
+
+.card__subtitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 0 0 0.5rem 0;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.hero-stat {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+}
+.hero-stat__label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 0.2rem;
+}
+.hero-stat__value {
+  font-size: 1.05rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.hero-stat__value--emphasis {
+  color: var(--warning);
+}
+
+.progress {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+  overflow: hidden;
+}
+.progress__fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 160ms ease-out;
+}
+.progress--accent .progress__fill { background: var(--accent); }
+.progress--ok .progress__fill { background: var(--success); }
+.progress--warn .progress__fill { background: var(--warning); }
+.progress--danger .progress__fill { background: var(--danger); }
+
+.hero-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+
+.hero-item {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: center;
+  text-align: center;
+}
+
+.hero-item__icon {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  border-radius: 6px;
+}
+.hero-item__icon img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.hero-item__amount {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--text) 75%, transparent);
+  color: var(--surface);
+  padding: 0 4px;
+  border-radius: 4px;
+}
+.hero-item__name {
+  font-size: 0.8rem;
+  line-height: 1.2;
+  word-break: break-word;
+  color: var(--text);
+}
+.hero-item__category {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+/* ---------- Floating queue bar ---------- */
+
+/*
+ * Pinned to the bottom of the content column so the build queue is visible on
+ * every page. Position is fixed relative to the viewport, offset by the sidebar
+ * width so it doesn't overlap the sidebar.
+ */
+.floating-queue-bar {
+  position: fixed;
+  bottom: 0;
+  left: var(--sidebar-width, 240px);
+  right: 0;
+  z-index: 20;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+  padding: 0.6rem 1.25rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 8.5rem;
+  overflow: hidden;
+  transition: left 0.18s ease;
+}
+
+.floating-queue-bar--empty {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.85rem;
+}
+
+.floating-queue-bar__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+}
+
+.floating-queue-bar__title {
+  font-size: 0.95rem;
+}
+
+.floating-queue-bar__summary {
+  font-size: 0.8rem;
+}
+
+/* Small pill used to surface account-level state (Plus active, capacity hints).
+   Lives at the top level (not scoped to the queue bar) so the AccountDetail KV
+   table can reuse the same visual vocabulary. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.4;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.chip--plus {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fff;
+}
+
+.chip--plus-off {
+  background: transparent;
+  color: var(--text-muted, var(--text));
+}
+
+.floating-queue-bar__scope {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-left: auto;
+}
+
+.floating-queue-bar__scope-btn {
+  background: transparent;
+  border: 0;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.78rem;
+  color: var(--text-muted, var(--text));
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.floating-queue-bar__scope-btn + .floating-queue-bar__scope-btn {
+  border-left: 1px solid var(--border);
+}
+
+.floating-queue-bar__scope-btn--active {
+  background: var(--primary);
+  color: var(--surface);
+}
+
+.floating-queue-bar__loading {
+  font-size: 0.8rem;
+}
+
+.floating-queue-bar__rows {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 0.15rem;
+}
+
+.floating-queue-bar__row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-muted, var(--surface));
+  text-decoration: none;
+  color: inherit;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.floating-queue-bar__row:hover {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+}
+
+.floating-queue-bar__village {
+  font-weight: 600;
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: baseline;
+}
+
+.floating-queue-bar__coords {
+  font-weight: 400;
+  font-size: 0.75rem;
+}
+
+.floating-queue-bar__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.floating-queue-bar__item--running {
+  color: color-mix(in srgb, var(--primary) 80%, var(--text));
+}
+
+.floating-queue-bar__item--pending {
+  color: var(--text);
+}
+
+.floating-queue-bar__item-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, var(--text));
+}
+
+.floating-queue-bar__extra {
+  font-size: 0.75rem;
+}
+
+.floating-queue-bar__idle {
+  font-style: italic;
+  font-size: 0.78rem;
+}
+
+.floating-queue-bar__finish {
+  font-size: 0.75rem;
+}
+
+/* ----------------------------------------------------------------------
+   Villages master-detail — left-hand list rows
+   ----------------------------------------------------------------------
+   The selected row uses a *strong* primary-blue fill so the white village
+   name pops in both light and dark themes. --primary is #1d5bd6 in light
+   and #5b95ff in dark — both clear at WCAG AA against white.
+   Drag-and-drop states:
+     - village-row--dragging   — the row currently being dragged (dimmed)
+     - village-row--drag-over  — the row currently under the cursor
+                                 (shows a top-edge indicator line)
+   ---------------------------------------------------------------------- */
+
+.village-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease;
+}
+
+.village-row:hover:not(.village-row--active) {
+  background: var(--surface-muted);
+}
+
+.village-row--active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* Everything inside the selected row needs to be legible on the blue fill —
+   the name, the coord/pop/queue meta line, and any pill all need white(ish)
+   text. The Cap pill keeps its green background so the capital marker
+   doesn't disappear on blue, but its text flips to white for contrast. */
+.village-row--active strong {
+  color: #ffffff;
+}
+.village-row--active .village-row__meta {
+  color: rgba(255, 255, 255, 0.88);
+}
+.village-row--active .muted {
+  color: rgba(255, 255, 255, 0.88);
+}
+.village-row--active .pill {
+  color: #ffffff;
+}
+
+/* The default meta row on non-active rows — keep it muted via the token so
+   dark-mode contrast stays correct. */
+.village-row__meta {
+  color: var(--text-muted);
+}
+
+.village-row--dragging {
+  opacity: 0.5;
+}
+
+.village-row--drag-over {
+  box-shadow: inset 0 2px 0 0 var(--primary);
+}
+
+/* ----------------------------------------------------------------------
+   Village master-detail layout
+   ----------------------------------------------------------------------
+   Two-column grid: left holds the village list Card; right holds the
+   tabs + tab panel. The collapsed modifier flips the grid to a single
+   right-only column so the toolbar (which carries the expand handle)
+   can take the full width.
+   ---------------------------------------------------------------------- */
+
+.village-master-detail {
+  display: grid;
+  grid-template-columns: minmax(220px, 260px) 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.village-master-detail--collapsed {
+  grid-template-columns: 1fr;
+}
+
+/* ----------------------------------------------------------------------
+   Tabs toolbar — tabs row that also carries inline actions on the right
+   ----------------------------------------------------------------------
+   Matches `.tabs` styling so the bottom border still reads as one piece,
+   but turns the row into a flex container so we can drop a collapse
+   handle on the left and an action button group on the right. Used only
+   on VillageDetailPanel today; if other pages adopt this pattern we'll
+   move it next to `.tabs`.
+   ---------------------------------------------------------------------- */
+
+.tabs-bar {
+  display: flex;
+  align-items: stretch;
+  gap: 0.4rem;
+  border-bottom: 1px solid var(--border);
+  padding: 0 0.25rem;
+  flex-wrap: wrap;
+}
+
+/* The inline tab nav inside the toolbar — drops the bottom border (the
+   parent .tabs-bar provides it) and inherits the tab visuals. */
+.tabs--inline {
+  border-bottom: none;
+  padding: 0;
+  flex: 0 0 auto;
+}
+
+.tabs-bar__handle {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.5rem 0.55rem;
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+  align-self: center;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tabs-bar__handle:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--text);
+}
+
+.tabs-bar__handle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.tabs-bar__spacer {
+  flex: 1 1 auto;
+  min-width: 0.5rem;
+}
+
+.tabs-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.25rem;
+  flex-wrap: wrap;
+}
+
+/* ----------------------------------------------------------------------
+   Resource & building tile grids (Buildings tab)
+   ----------------------------------------------------------------------
+   The two grids share a `.tile` base. Tiles are clickable (the whole
+   tile is the queue-the-next-level button) so they get button-like
+   focus/hover affordances even though some are rendered as <div> when
+   they host the picker UI.
+   ---------------------------------------------------------------------- */
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: inherit;
+  text-align: left;
+  font-family: inherit;
+  font-size: 0.85rem;
+  position: relative;
+  min-height: 5.6rem;
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+.tile:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.tile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tile:active {
+  transform: translateY(1px);
+}
+
+.tile--muted {
+  background: var(--surface-muted);
+}
+
+.tile__slot {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.45rem;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.tile__meta {
+  font-size: 0.7rem;
+}
+
+/* --- Resource grid: 9-wide so 18 tiles lay out in 2 tidy rows --- */
+.resource-grid {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+@media (max-width: 1100px) {
+  .resource-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.resource-tile {
+  align-items: stretch;
+  /* Soft colored stripe on the left edge so the resource type reads at a
+     glance without spending tile real estate on a "Wood" label. */
+  border-left-width: 4px;
+  padding-left: 0.5rem;
+}
+
+.resource-tile__icon {
+  font-size: 1.05rem;
+  line-height: 1;
+  margin-top: 0.05rem;
+}
+
+.resource-tile__level {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem;
+  font-size: 1rem;
+}
+
+.resource-tile__queued {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+/* Bottom row inside a resource tile — anchors the queued delta on the left
+   and the upgrade arrow on the right. The empty placeholder span keeps the
+   arrow column-aligned across all 18 tiles whether or not a delta is shown. */
+.resource-tile__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-top: auto;
+}
+
+.resource-tile__delta {
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.resource-tile__delta--empty {
+  visibility: hidden;
+  /* Width matches the rendered "+9" so the arrow's right-anchor is stable
+     between idle and queued states even with `space-between`. */
+  min-width: 1.4rem;
+}
+
+.resource-tile__cta {
+  align-self: flex-end;
+  margin-top: auto;
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  width: 1.4rem;
+  height: 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  transition: background 0.12s ease, transform 0.08s ease;
+}
+
+.tile:hover .resource-tile__cta {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.tile:active .resource-tile__cta {
+  transform: translateY(1px);
+}
+
+.resource-tile--wood   { border-left-color: #2e7d32; background: color-mix(in srgb, #2e7d32 6%, var(--surface)); }
+.resource-tile--clay   { border-left-color: #c2410c; background: color-mix(in srgb, #c2410c 6%, var(--surface)); }
+.resource-tile--iron   { border-left-color: #5b6573; background: color-mix(in srgb, #5b6573 8%, var(--surface)); }
+.resource-tile--crop   { border-left-color: #ca8a04; background: color-mix(in srgb, #ca8a04 7%, var(--surface)); }
+.resource-tile--empty  { border-left-color: var(--border-strong); }
+
+/* --- Building grid: 7-wide for 22 slots; collapses to 5 then 4 on narrow viewports --- */
+.building-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+@media (max-width: 1280px) {
+  .building-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .building-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.building-tile {
+  min-height: 6.2rem;
+}
+
+.building-tile__name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.2;
+  /* Reserve two lines so tiles don't jump in height when names wrap.
+     padding-right keeps the second line clear of the absolute slot
+     number in the top-right corner. */
+  min-height: 1.9rem;
+  padding-right: 1.1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.building-tile__level {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.3rem;
+  font-size: 0.92rem;
+}
+
+.building-tile__queued {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+/* Bottom row inside a building tile — anchors the queued delta on the left
+   and the upgrade arrow on the right. Mirrors the resource tile layout so
+   the two grids feel like a set. */
+.building-tile__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-top: auto;
+}
+
+.building-tile__delta {
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.building-tile__delta--empty {
+  visibility: hidden;
+  min-width: 1.4rem;
+}
+
+.building-tile__cta {
+  align-self: flex-end;
+  margin-top: auto;
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  width: 1.4rem;
+  height: 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  transition: background 0.12s ease, transform 0.08s ease;
+}
+
+.tile:hover .building-tile__cta {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.tile:active .building-tile__cta {
+  transform: translateY(1px);
+}
+
+/* Empty / picking states have no upgrade arrow — keep specificity tight to
+   avoid the hover ring lighting up on a non-existent target. */
+.building-tile--empty .building-tile__cta,
+.building-tile--picking .building-tile__cta {
+  display: none;
+}
+
+.building-tile__placeholder {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-top: auto;
+  margin-bottom: auto;
+  text-align: center;
+}
+
+.building-tile__badge {
+  position: absolute;
+  top: 0.3rem;
+  left: 0.45rem;
+}
+
+.building-tile--empty {
+  border-style: dashed;
+}
+
+.building-tile--picking {
+  cursor: default;
+}
+
+/* Inline picker that replaces the "+ build" placeholder when an empty
+   slot is clicked. Sized to fit inside the same tile footprint so
+   surrounding tiles don't reflow. */
+.building-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: auto;
+}
+
+.building-picker__select {
+  font-size: 0.72rem;
+  padding: 0.15rem 0.25rem;
+  width: 100%;
+}
+
+.building-picker__actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.building-picker__actions .btn {
+  padding: 0.15rem 0.45rem;
+  font-size: 0.72rem;
+}
+
+.building-picker__actions .btn:first-child {
+  flex: 1;
+}
+
+/* ---------- Settings accordion ---------- */
+
+.settings-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.settings-group {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.settings-group[open] {
+  background: var(--surface);
+}
+
+.settings-group__summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.55rem 0.85rem;
+  user-select: none;
+  position: relative;
+  padding-left: 1.75rem;
+}
+
+.settings-group__summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings-group__summary::before {
+  content: '▸';
+  position: absolute;
+  left: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  transition: transform 0.15s ease;
+}
+
+.settings-group[open] > .settings-group__summary::before {
+  transform: translateY(-50%) rotate(90deg);
+}
+
+.settings-group__title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.settings-group__hint {
+  font-size: 0.8rem;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.settings-group__body {
+  padding: 0.6rem 0.85rem 0.85rem;
+  border-top: 1px solid var(--border);
+}
+
+/*
+  Compact form variant used inside collapsible settings groups. Lays inputs
+  out in a 2-column auto-fit grid so the panel stops being a tall single
+  column. Fields tagged with form__field--full opt out and span the full
+  row — used for long labels, checkboxes, and grouped ratio inputs.
+*/
+.form--compact {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.6rem 0.9rem;
+}
+
+.form--compact .form__field--full {
+  grid-column: 1 / -1;
+}
+
+.form--compact .form__field input,
+.form--compact .form__field select {
+  padding: 0.45rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+/* ---------- AccountDetailPage ---------- */
+
+/* Identity block header — the <dl class="kv"> sits on the left and the Edit
+   button floats to the right on a single row so the user always has a
+   one-click path into edit mode without scrolling. */
+.account-id {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+.account-id > .kv { flex: 1 1 auto; min-width: 0; }
+.account-id__actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+/* Inline "password field + show/hide" cluster on the read-only identity
+   block. Uses a real <input type="password"> so the browser renders the
+   same dots the user sees everywhere else and no exotic font is needed. */
+.password-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 100%;
+}
+.password-field__input {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  min-width: 12rem;
+}
+.password-field__input[readonly] {
+  cursor: default;
+  opacity: 0.95;
+}
+
+/* Bottom action row on AccountDetailPage. The small dot at the start is a
+   vestigial hint of session state ("you can see in a glance if the
+   buttons you're about to click apply to a live session or not"). The
+   spacer consumes leftover width so Delete gets pushed to the right. */
+.account-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.account-actions__spacer { flex: 1 1 auto; }
+
+/* Tiny session-state dot reused from the old inline toolbar. Kept as its
+   own class (rather than the sidebar's) because it renders on a light
+   surface here and needs a contrasting ring. */
+.account-toolbar__dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.account-toolbar__dot--online {
+  background: #22c55e;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #22c55e 25%, transparent);
+}
+.account-toolbar__dot--offline {
+  background: #ef4444;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #ef4444 25%, transparent);
+}
+
