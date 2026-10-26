@@ -6,12 +6,14 @@ import com.travianbot.account.domain.Account;
 import com.travianbot.bot.client.TravianSession;
 import com.travianbot.bot.client.browser.BrowserSessionManager;
 import com.travianbot.bot.client.browser.BrowserTravianClient;
+import com.travianbot.bot.client.browser.CaptchaGate;
 import com.travianbot.bot.client.browser.LoginFailedException;
 import com.travianbot.bot.scraper.FarmlistScrapingService;
 import com.travianbot.bot.scraper.ProfileScraper;
 import com.travianbot.bot.scraper.ScrapingService;
 import com.travianbot.botlog.domain.BotEventOutcome;
 import com.travianbot.botlog.service.BotEventService;
+import com.travianbot.notification.NotificationDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -56,6 +58,8 @@ public class LoginService {
      */
     private final ObjectProvider<ProfileScraper> profileScraperProvider;
     private final BotEventService botEventService;
+    private final NotificationDispatcher notifiers;
+    private final CaptchaGate captchaGate;
     private final Set<Long> inFlight = ConcurrentHashMap.newKeySet();
 
     public LoginService(
@@ -64,7 +68,9 @@ public class LoginService {
             ObjectProvider<ScrapingService> scrapingServiceProvider,
             ObjectProvider<FarmlistScrapingService> farmlistScrapingServiceProvider,
             ObjectProvider<ProfileScraper> profileScraperProvider,
-            BotEventService botEventService
+            BotEventService botEventService,
+            NotificationDispatcher notifiers,
+            CaptchaGate captchaGate
     ) {
         this.accountService = accountService;
         this.sessionManager = sessionManager;
@@ -72,6 +78,8 @@ public class LoginService {
         this.farmlistScrapingServiceProvider = farmlistScrapingServiceProvider;
         this.profileScraperProvider = profileScraperProvider;
         this.botEventService = botEventService;
+        this.notifiers = notifiers;
+        this.captchaGate = captchaGate;
     }
 
     public LoginResultResponse login(Long accountId) {
@@ -105,6 +113,10 @@ public class LoginService {
             botEventService.record(accountId, null, "LOGIN", BotEventOutcome.OK, msg);
             log.info("Login success for account {} ({})", accountId, account.getUsername());
 
+            // A successful login proves any earlier captcha is solved — reopen
+            // the gate so schedulers and auto-relogin resume.
+            captchaGate.clear(accountId);
+
             // Best-effort: scrape the current village immediately so the UI has something to show.
             // Failures here must NOT overwrite the SUCCESS status — the user is logged in either way.
             tryAutoScrape(accountId);
@@ -116,6 +128,7 @@ public class LoginService {
             accountService.recordLoginAttempt(accountId, "FAILED", e.getMessage());
             botEventService.record(accountId, null, "LOGIN", BotEventOutcome.ERROR,
                     "Login failed: " + e.getMessage());
+            notifyLoginFailure(accountId, e.getMessage());
             return LoginResultResponse.failure("FAILED", e.getMessage());
         } catch (PlaywrightException e) {
             String msg = e.getMessage() == null ? "Unknown browser error" : e.getMessage();
@@ -123,6 +136,11 @@ public class LoginService {
             accountService.recordLoginAttempt(accountId, "BROWSER_ERROR", msg);
             botEventService.record(accountId, null, "LOGIN", BotEventOutcome.ERROR,
                     "Browser error: " + msg);
+            // Treat a Playwright crash as session-lost — the browser is gone
+            // either way, so the user needs the same "your bot stopped"
+            // signal as a soft logout. Captcha never surfaces here, so we
+            // don't bother with the heuristic split.
+            safeNotifySessionLost(accountId, "Browser error: " + msg);
             return LoginResultResponse.failure("BROWSER_ERROR", msg);
         } catch (Exception e) {
             log.error("Unexpected error for account {}", accountId, e);
@@ -130,9 +148,41 @@ public class LoginService {
             accountService.recordLoginAttempt(accountId, "ERROR", msg);
             botEventService.record(accountId, null, "LOGIN", BotEventOutcome.ERROR,
                     "Unexpected login error: " + msg);
+            safeNotifySessionLost(accountId, "Unexpected: " + msg);
             return LoginResultResponse.failure("ERROR", msg);
         } finally {
             inFlight.remove(accountId);
+        }
+    }
+
+    /**
+     * Pick the right notification kind from a {@link LoginFailedException}
+     * message — if the text mentions "captcha", surface a captcha alert
+     * (orange / "needs human attention"); otherwise treat as a generic
+     * session-lost. Best-effort — exceptions here must not affect the login
+     * result the caller already chose.
+     */
+    private void notifyLoginFailure(Long accountId, String message) {
+        String text = message == null ? "" : message;
+        boolean isCaptcha = text.toLowerCase(java.util.Locale.ROOT).contains("captcha");
+        try {
+            if (isCaptcha) {
+                notifiers.notifyCaptcha(accountId, text);
+            } else {
+                notifiers.notifySessionLost(accountId, text);
+            }
+        } catch (RuntimeException e) {
+            log.debug("Notify after login failure failed for account {}: {}",
+                    accountId, e.toString());
+        }
+    }
+
+    private void safeNotifySessionLost(Long accountId, String reason) {
+        try {
+            notifiers.notifySessionLost(accountId, reason);
+        } catch (RuntimeException e) {
+            log.debug("Notify (session-lost) failed for account {}: {}",
+                    accountId, e.toString());
         }
     }
 

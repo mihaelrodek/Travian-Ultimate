@@ -55,6 +55,31 @@ export interface Building {
   updatedAt: string;
 }
 
+/**
+ * Community-standard role tags for villages. The bot doesn't infer these —
+ * the user tags each village in the Village troops page. Mirrors the
+ * backend `VillageType` enum 1:1.
+ */
+export const VILLAGE_TYPES = [
+  'OFF_HAMMER',
+  'OFF_GHOST',
+  'DEFF',
+  'WWK',
+  'WWR',
+  'PVE',
+] as const;
+export type VillageType = (typeof VILLAGE_TYPES)[number];
+
+/** Human-readable labels for the village-type picker. */
+export const VILLAGE_TYPE_LABELS: Record<VillageType, string> = {
+  OFF_HAMMER: 'Off hammer',
+  OFF_GHOST: 'Off ghost',
+  DEFF: 'Deff',
+  WWK: 'WWK',
+  WWR: 'WWR',
+  PVE: 'PVE',
+};
+
 export interface Village {
   id: number;
   accountId: number;
@@ -75,6 +100,15 @@ export interface Village {
    * by createdAt on the backend — see VillageRepository.
    */
   orderIndex: number;
+  /**
+   * Manual Tournament Square level (0..20) typed by the user. Null when
+   * unset — the inverse solver falls back to brute-forcing TS levels.
+   */
+  tsLevel: number | null;
+  /**
+   * User-applied role tag — null when unclassified.
+   */
+  villageType: VillageType | null;
   lastScrapedAt: string | null;
   createdAt: string;
   updatedAt: string;

@@ -13,18 +13,26 @@ public record GeneralSettingsResponse(
          */
         Language language,
         boolean desktopNotificationsEnabled,
+        boolean soundAlertsEnabled,
         int defaultCheckIntervalMinutes,
         int minClickDelayMs,
-        int maxClickDelayMs
+        int maxClickDelayMs,
+        int maxActionsPerMinute,
+        boolean villageScrapingEnabled,
+        boolean autoReloginEnabled
 ) {
     public static GeneralSettingsResponse from(GeneralSettings s) {
         return new GeneralSettingsResponse(
                 s.getTheme(),
                 s.getLanguageEnum(),
                 s.isDesktopNotificationsEnabled(),
+                s.isSoundAlertsEnabled(),
                 s.getDefaultCheckIntervalMinutes(),
                 s.getMinClickDelayMs(),
-                s.getMaxClickDelayMs()
+                s.getMaxClickDelayMs(),
+                s.getMaxActionsPerMinute(),
+                s.isVillageScrapingEnabled(),
+                s.isAutoReloginEnabled()
         );
     }
 }

@@ -3,6 +3,7 @@ package com.travianbot.village.api.dto;
 import com.travianbot.village.domain.Building;
 import com.travianbot.village.domain.ResourceField;
 import com.travianbot.village.domain.Village;
+import com.travianbot.village.domain.VillageType;
 
 import java.time.Instant;
 import java.util.List;
@@ -27,6 +28,18 @@ public record VillageResponse(
          * time — see {@code VillageRepository}.
          */
         int orderIndex,
+        /**
+         * Manual Tournament Square level set by the user (0..20). Null when
+         * unset — the analyzer brute-forces TS in that case. Used to pin the
+         * inverse solver and (future) return-catch math.
+         */
+        Integer tsLevel,
+        /**
+         * User-applied role tag (off hammer, deff, pve, …). Null means
+         * unclassified. Persisted on Village so a Clear-all of troop
+         * snapshots doesn't lose it.
+         */
+        VillageType villageType,
         Instant lastScrapedAt,
         Instant createdAt,
         Instant updatedAt,
@@ -64,6 +77,8 @@ public record VillageResponse(
                 village.getTravianVillageId(),
                 village.getGroupName(),
                 village.getOrderIndex(),
+                village.getTsLevel(),
+                village.getVillageType(),
                 village.getLastScrapedAt(),
                 village.getCreatedAt(),
                 village.getUpdatedAt(),

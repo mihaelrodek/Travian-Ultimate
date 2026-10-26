@@ -1,9 +1,22 @@
 <!doctype html>
+<!--
+  No data-theme attribute on purpose. GeneralSettingsContext takes over once
+  settings load and sets data-theme="dark" / "light" or strips it for SYSTEM.
+  Until then the unattributed :root rules in index.css render dark glass by
+  default, with prefers-color-scheme: light flipping to the light palette
+  for OS dark-mode users.
+-->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Travian Bot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div id="root"></div>

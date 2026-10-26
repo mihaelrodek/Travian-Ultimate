@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../components/Card';
+import GlassHeader from '../components/GlassHeader';
 import { useCurrentAccount } from '../hooks/useCurrentAccount';
 import { farmlistsApi } from '../api/farmlists';
 import type { Farmlist, FarmlistType } from '../types/farmlist';
@@ -146,13 +147,10 @@ export default function FarmlistsListPage() {
 
   return (
     <div className="stack">
-      <div>
-        <h1 className="page__title">Farmlists</h1>
-        <p className="page__subtitle">
-          Raid lists are scraped from the rally point automatically. Set each list's type,
-          interval, and optional group here — the scheduler takes it from there.
-        </p>
-      </div>
+      <GlassHeader
+        title="Farmliste"
+        subtitle="Raid liste se skidaju iz rally pointa automatski. Postavi tip / interval / grupu — scheduler odrađuje ostalo."
+      />
 
       {accountId == null ? (
         <Card>

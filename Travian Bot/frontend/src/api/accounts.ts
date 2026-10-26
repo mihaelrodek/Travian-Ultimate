@@ -1,5 +1,11 @@
 import { api } from './client';
-import type { Account, CreateAccountRequest, LoginResult, UpdateAccountRequest } from '../types/account';
+import type {
+  Account,
+  AccountCredentials,
+  CreateAccountRequest,
+  LoginResult,
+  UpdateAccountRequest,
+} from '../types/account';
 
 /**
  * The three "power" actions are deliberately distinct so the UI can express
@@ -14,6 +20,7 @@ import type { Account, CreateAccountRequest, LoginResult, UpdateAccountRequest }
 export const accountsApi = {
   list: () => api.get<Account[]>('/accounts'),
   get: (id: number) => api.get<Account>(`/accounts/${id}`),
+  credentials: (id: number) => api.get<AccountCredentials>(`/accounts/${id}/credentials`),
   create: (body: CreateAccountRequest) => api.post<Account>('/accounts', body),
   update: (id: number, body: UpdateAccountRequest) => api.put<Account>(`/accounts/${id}`, body),
   delete: (id: number) => api.delete<void>(`/accounts/${id}`),

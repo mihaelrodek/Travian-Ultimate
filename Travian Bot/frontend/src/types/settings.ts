@@ -88,6 +88,12 @@ export interface AccountSettings {
   /** True if a password is saved server-side. The actual value is never returned. */
   proxyPasswordSet: boolean;
 
+  /**
+   * Launch this account's Chromium without a visible window. Off by default.
+   * Takes effect on the next login/restart (headless is fixed at launch).
+   */
+  headless: boolean;
+
   activeWindows: ActiveWindow[];
 }
 
@@ -107,6 +113,11 @@ export interface GeneralSettings {
   theme: Theme;
   language: Language;
   desktopNotificationsEnabled: boolean;
+  /**
+   * Play a short Web Audio beep when a critical event (a new incoming attack)
+   * is detected while the app is open. Off by default.
+   */
+  soundAlertsEnabled: boolean;
   defaultCheckIntervalMinutes: number;
   /**
    * Lower bound (ms, inclusive) of the random delay inserted before each browser click/type.
@@ -115,4 +126,24 @@ export interface GeneralSettings {
   minClickDelayMs: number;
   /** Upper bound (ms, inclusive) of the random click delay range. */
   maxClickDelayMs: number;
+  /**
+   * Hard ceiling on browser actions (navigations/clicks) per minute per
+   * account. Where the click-delay range spaces individual actions, this caps
+   * the sustained rate so a burst of scheduled work can't fire many requests
+   * in a few seconds. 1–600.
+   */
+  maxActionsPerMinute: number;
+  /**
+   * Global kill-switch for the per-village auto-scrape scheduler. When
+   * false, no village gets scraped automatically regardless of per-village
+   * `autoScrapeEnabled`. Manual UI scrapes still work — they bypass the
+   * scheduler.
+   */
+  villageScrapingEnabled: boolean;
+  /**
+   * Opt-in: when a scheduled task finds the browser session gone, attempt
+   * one automatic re-login (cooldown-limited per account) and continue.
+   * Off by default — unattended logins can run into captcha loops.
+   */
+  autoReloginEnabled: boolean;
 }

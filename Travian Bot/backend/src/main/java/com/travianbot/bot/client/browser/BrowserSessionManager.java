@@ -1,6 +1,10 @@
 package com.travianbot.bot.client.browser;
 
+import com.microsoft.playwright.options.Proxy;
+import com.travianbot.account.domain.AccountProxy;
 import com.travianbot.account.event.AccountDeletingEvent;
+import com.travianbot.account.persistence.AccountProxyRepository;
+import com.travianbot.account.persistence.AccountSettingsRepository;
 import com.travianbot.bot.client.TravianSession;
 import com.travianbot.settings.service.GeneralSettingsService;
 import jakarta.annotation.PreDestroy;
@@ -46,12 +50,20 @@ public class BrowserSessionManager {
      * on every call, so a settings change is picked up by the next action without a restart.
      */
     private final HumanDelay humanDelay;
+    private final ActionRateLimiter rateLimiter;
+    private final AccountProxyRepository proxyRepository;
+    private final AccountSettingsRepository accountSettingsRepository;
 
-    public BrowserSessionManager(GeneralSettingsService generalSettingsService) {
+    public BrowserSessionManager(GeneralSettingsService generalSettingsService,
+                                 AccountProxyRepository proxyRepository,
+                                 AccountSettingsRepository accountSettingsRepository) {
         this.humanDelay = new HumanDelay(() -> {
             GeneralSettingsService.ClickDelayRange r = generalSettingsService.getClickDelayRange();
             return new HumanDelay.Range(r.minMs(), r.maxMs());
         });
+        this.rateLimiter = new ActionRateLimiter(generalSettingsService::getMaxActionsPerMinute);
+        this.proxyRepository = proxyRepository;
+        this.accountSettingsRepository = accountSettingsRepository;
     }
 
     /**
@@ -61,9 +73,56 @@ public class BrowserSessionManager {
     public BrowserTravianClient getOrCreate(Long accountId, Supplier<TravianSession> sessionSupplier) {
         Objects.requireNonNull(accountId, "accountId");
         return clients.computeIfAbsent(accountId, id -> {
-            log.info("Creating new browser session for account {}", id);
-            return new BrowserTravianClient(sessionSupplier.get(), false, humanDelay);
+            Proxy proxy = resolveProxy(id);
+            boolean headless = resolveHeadless(id);
+            log.info("Creating new browser session for account {} ({}){}", id,
+                    headless ? "headless" : "visible",
+                    proxy == null ? " · direct connection" : " · via proxy " + proxy.server);
+            return new BrowserTravianClient(sessionSupplier.get(), headless, humanDelay, proxy, id, rateLimiter);
         });
+    }
+
+    /**
+     * Per-account headless preference (P2.11). Best-effort: a lookup failure or
+     * a missing settings row defaults to visible (false), which is the safe
+     * choice — a visible browser lets the user notice and hand-solve a captcha.
+     */
+    private boolean resolveHeadless(Long accountId) {
+        try {
+            return accountSettingsRepository.findByAccountId(accountId)
+                    .map(s -> s.isHeadless())
+                    .orElse(false);
+        } catch (RuntimeException e) {
+            log.warn("Failed to resolve headless flag for account {} — defaulting to visible: {}",
+                    accountId, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Maps the account's active {@link AccountProxy} row (if any) to Playwright
+     * launch options. Chromium can't switch proxies after launch, so activating
+     * a different proxy row takes effect on the next login/restart — which is
+     * also when the user gets a fresh session anyway. Best-effort: a DB hiccup
+     * degrades to a direct connection rather than blocking the login.
+     */
+    private Proxy resolveProxy(Long accountId) {
+        try {
+            AccountProxy row = proxyRepository.findByAccountIdAndActiveTrue(accountId).orElse(null);
+            if (row == null || row.getUrl() == null || row.getUrl().isBlank()) return null;
+            Proxy proxy = new Proxy(row.getUrl().trim());
+            if (row.getUsername() != null && !row.getUsername().isBlank()) {
+                proxy.setUsername(row.getUsername());
+            }
+            if (row.getPassword() != null && !row.getPassword().isBlank()) {
+                proxy.setPassword(row.getPassword());
+            }
+            return proxy;
+        } catch (RuntimeException e) {
+            log.warn("Failed to resolve proxy for account {} — launching without proxy: {}",
+                    accountId, e.getMessage());
+            return null;
+        }
     }
 
     /** Cached client for the account, or {@code null} if none is open. */

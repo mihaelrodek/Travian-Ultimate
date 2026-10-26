@@ -15,6 +15,9 @@ type SaveState = { kind: 'idle' } | { kind: 'saving' } | { kind: 'saved' } | { k
 /** Matches the backend {@code @Max(10000)} validator on {@code min/maxClickDelayMs}. */
 const CLICK_DELAY_ABS_MAX_MS = 10_000;
 
+/** Matches the backend {@code @Max(600)} validator on {@code maxActionsPerMinute}. */
+const RATE_LIMIT_ABS_MAX = 600;
+
 /**
  * Form for app-wide preferences. Saves via the context so the theme change
  * takes effect on {@code <html>} immediately.
@@ -68,6 +71,11 @@ export default function GeneralSettingsForm() {
     return Math.min(CLICK_DELAY_ABS_MAX_MS, Math.max(1, value));
   };
 
+  const clampRate = (value: number) => {
+    if (Number.isNaN(value)) return 1;
+    return Math.min(RATE_LIMIT_ABS_MAX, Math.max(1, value));
+  };
+
   const clampInterval = (value: number, lo: number, hi: number) => {
     if (Number.isNaN(value)) return lo;
     return Math.min(hi, Math.max(lo, value));
@@ -102,6 +110,18 @@ export default function GeneralSettingsForm() {
           />
           <span>{t('settings.appearance.desktopNotifications')}</span>
         </label>
+
+        <label className="form__check">
+          <input
+            type="checkbox"
+            checked={draft.soundAlertsEnabled}
+            onChange={(e) => patch('soundAlertsEnabled', e.target.checked)}
+          />
+          <span>{t('settings.appearance.soundAlerts')}</span>
+        </label>
+        <p className="muted" style={{ margin: '0.25rem 0 0 1.6rem', fontSize: '0.8rem' }}>
+          {t('settings.appearance.soundAlertsHint')}
+        </p>
       </Section>
 
       <Section
@@ -142,6 +162,23 @@ export default function GeneralSettingsForm() {
             </label>
           </div>
         </div>
+
+        <div className="form__field">
+          <label>{t('settings.humanization.rateLimit')}</label>
+          <p className="muted" style={{ margin: '0 0 0.5rem', fontSize: '0.85rem' }}>
+            {t('settings.humanization.rateLimitHint')}
+          </p>
+          <input
+            type="number"
+            min={1}
+            max={RATE_LIMIT_ABS_MAX}
+            value={draft.maxActionsPerMinute}
+            onChange={(e) => {
+              patch('maxActionsPerMinute', clampRate(Number.parseInt(e.target.value, 10)));
+            }}
+            style={{ width: '7rem' }}
+          />
+        </div>
       </Section>
 
       <Section
@@ -169,6 +206,30 @@ export default function GeneralSettingsForm() {
          * Reason: a single global knob doesn't fit real play — a capital under attack wants
          * 2–5 min polling while a quiet support village is fine at 30–60.
          */}
+
+        <label className="form__check" style={{ marginTop: '0.75rem' }}>
+          <input
+            type="checkbox"
+            checked={draft.villageScrapingEnabled}
+            onChange={(e) => patch('villageScrapingEnabled', e.target.checked)}
+          />
+          <span>{t('settings.scraping.villageScrapingEnabled')}</span>
+        </label>
+        <p className="muted" style={{ margin: '0.25rem 0 0 1.6rem', fontSize: '0.8rem' }}>
+          {t('settings.scraping.villageScrapingEnabledHint')}
+        </p>
+
+        <label className="form__check" style={{ marginTop: '0.75rem' }}>
+          <input
+            type="checkbox"
+            checked={draft.autoReloginEnabled}
+            onChange={(e) => patch('autoReloginEnabled', e.target.checked)}
+          />
+          <span>{t('settings.scraping.autoRelogin')}</span>
+        </label>
+        <p className="muted" style={{ margin: '0.25rem 0 0 1.6rem', fontSize: '0.8rem' }}>
+          {t('settings.scraping.autoReloginHint')}
+        </p>
       </Section>
 
       <div className="settings-savebar">

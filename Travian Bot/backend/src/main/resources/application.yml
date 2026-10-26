@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8185}
 
 spring:
   application:
@@ -8,21 +8,45 @@ spring:
   datasource:
     # Defaults match docker-compose / .env so `mvn spring-boot:run` works out of the box.
     # Override by exporting POSTGRES_* in your shell (or use direnv with the project's .env).
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5433}/${POSTGRES_DB:travian_bot}
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5485}/${POSTGRES_DB:travian_bot}
     username: ${POSTGRES_USER:travian}
     password: ${POSTGRES_PASSWORD:travian}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
+      # TODO Phase 0.3: switch to `validate` once V1__init.sql baseline is generated
+      # (run app once with schema-generation enabled below, capture script, then flip).
       ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+        # Batch inserts/updates — turns the intel sync (~7 000 rows) from
+        # 14 000 single-row round trips into ~280 batches. Order_inserts +
+        # order_updates lets Hibernate actually use the batch.
+        jdbc.batch_size: 50
+        order_inserts: true
+        order_updates: true
+      # Uncomment to dump current Hibernate-managed schema to a file you can promote
+      # to src/main/resources/db/migration/V1__init.sql:
+      # jakarta.persistence.schema-generation.scripts.action: create
+      # jakarta.persistence.schema-generation.scripts.create-target: schema-dump.sql
     show-sql: false
     open-in-view: false
 
+  flyway:
+    # Disabled until the V1__init.sql baseline exists (see db/migration/README.md).
+    # Running Flyway alongside ddl-auto:update means two writers mutating the same
+    # schema — flip this to true in the same commit that adds V1 and switches
+    # ddl-auto to validate, never before.
+    enabled: false
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+
 logging:
   level:
-    com.travianbot: DEBUG
+    # INFO by default; bump a specific package to DEBUG locally when digging
+    # (e.g. com.travianbot.bot.scraper: DEBUG) instead of firehosing everything.
+    com.travianbot: INFO

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type DragEvent as ReactDragEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Card from '../components/Card';
+import GlassHeader from '../components/GlassHeader';
 import VillageDetailPanel from '../features/villages/VillageDetailPanel';
 import { useCurrentAccount } from '../hooks/useCurrentAccount';
 import { villagesApi } from '../api/villages';
@@ -303,6 +304,10 @@ export default function VillagesListPage() {
 
   return (
     <div className="stack stack--xwide">
+      <GlassHeader
+        title="Sela"
+        subtitle="Lista sela + redovi gradnje + resursna polja."
+      />
       {accountId == null && !accountsLoading && (
         <Card>
           <p className="muted">

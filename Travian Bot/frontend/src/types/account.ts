@@ -3,13 +3,6 @@ export type Account = {
   serverUrl: string;
   username: string;
   /**
-   * Travian login password. Returned by the backend so the account detail
-   * page can show it blurred (reveal on click) and prefill the inline edit
-   * form. Safe because the project already stores it plaintext in the DB —
-   * when that changes this field should move to a gated endpoint.
-   */
-  password: string;
-  /**
    * Display alias chosen when the account was added. Used by the sidebar and
    * the account detail header in place of the raw Travian username. The
    * backend defaults this to {@link #username} when the user leaves the
@@ -51,6 +44,15 @@ export type Account = {
    * offline) vs. green (active and live) based on this.
    */
   loggedIn: boolean;
+};
+
+/**
+ * Response of GET /accounts/{id}/credentials — the plaintext Travian password,
+ * fetched lazily (reveal / edit) so it stays out of the routinely-polled
+ * {@link Account} payload and off the wire until the user asks for it.
+ */
+export type AccountCredentials = {
+  password: string;
 };
 
 export type CreateAccountRequest = {

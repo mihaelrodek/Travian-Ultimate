@@ -17,9 +17,13 @@
   "nav": {
     "sections": {
       "accounts": "Računi",
-      "game": "Igra"
+      "game": "Igra",
+      "defense": "Obrana",
+      "integrations": "Integracije"
     },
+    "commandCenter": "Naredbeni centar",
     "accounts": "Računi",
+    "addAccount": "Dodaj račun",
     "settings": "Postavke",
     "villages": "Sela",
     "notes": "Bilješke",
@@ -29,6 +33,19 @@
     "hero": "Heroj",
     "templates": "Predlošci",
     "aiAnalysis": "AI analiza",
+    "incoming": "Dolazni napadi",
+    "intel": "Neaktivni igrači",
+    "enemyIntel": "Špijunaža",
+    "croppers": "Cropperi",
+    "players": "Igrači",
+    "alliances": "Savezi",
+    "reportIncoming": "Prijavi napade",
+    "troopCounts": "Vojska po selima",
+    "attackPlanner": "Planer napada",
+    "travelCalc": "Vrijeme puta",
+    "map": "Karta svijeta",
+    "discord": "Discord",
+    "telegram": "Telegram",
     "log": "Dnevnik",
     "collapse": "Sakrij bočnu traku",
     "expand": "Otvori bočnu traku",
@@ -49,7 +66,9 @@
       "theme.dark": "Tamna",
       "theme.system": "Sustav",
       "language": "Jezik",
-      "desktopNotifications": "Omogući desktop obavijesti"
+      "desktopNotifications": "Omogući desktop obavijesti",
+      "soundAlerts": "Zvučni signal kod dolaznih napada",
+      "soundAlertsHint": "Pušta kratki zvuk u pregledniku kad se otkrije novi dolazni napad dok je aplikacija otvorena. Preglednik može zatražiti dopuštenje za zvuk pri prvom korištenju."
     },
     "humanization": {
       "title": "Humanizacija",
@@ -57,13 +76,103 @@
       "clickDelay": "Odgađanje klika (ms)",
       "clickDelayHint": "Obje granice moraju biti 1–{{max}} ms i maksimum ≥ minimum.",
       "min": "Min (ms)",
-      "max": "Max (ms)"
+      "max": "Max (ms)",
+      "rateLimit": "Maks. akcija po minuti",
+      "rateLimitHint": "Tvrda granica broja browser akcija po minuti po računu. Odgađanje klika razmiče pojedine akcije; ovo ograničava trajnu brzinu da nalet zakazanog posla ne ispali puno zahtjeva u par sekundi. Kratki nalet do ove vrijednosti je dopušten nakon mirovanja."
     },
     "scraping": {
       "title": "Skeniranje",
       "hint": "Kontrolira koliko često pozadinski scheduler osvježava podatke iz igre. Kraći intervali znače svježije podatke, ali više mrežne aktivnosti — odaberi vrijednosti koje bi mogao opravdati ljudskom promatraču.",
       "defaultCheck": "Zadani interval provjere (minute)",
-      "defaultCheckHint": "Rezerva koja se primjenjuje na račune bez vlastitog intervala."
+      "defaultCheckHint": "Rezerva koja se primjenjuje na račune bez vlastitog intervala.",
+      "villageScrapingEnabled": "Uključi automatsko skeniranje sela",
+      "villageScrapingEnabledHint": "Globalni prekidač. Isključi da utišaš svako zakazano skeniranje sela, bez obzira na pojedinačne postavke po selu. Ručna skeniranja (Skeniraj sad, Skeniraj trenutno/sva) i dalje rade.",
+      "autoRelogin": "Automatska ponovna prijava kod izgubljene sesije",
+      "autoReloginHint": "Kad zakazano skeniranje nađe da je browser sesija nestala, automatski se prijavi (najviše jedan pokušaj po računu svakih 10 minuta) i nastavi. Isključeno po defaultu — prijava bez nadzora može upasti u captcha petlju. Poštuje aktivne sate svakog računa."
+    },
+    "_discordMoved": "Postavi Discord pod Integracije → Discord."
+  },
+  "map": {
+    "title": "Karta svijeta",
+    "subtitle": "Sva naseljena sela iz dnevnog map.sql — pomiči, zumiraj, hover za detalje.",
+    "pickServer": "Odaberi Travian server gore za učitavanje karte svijeta.",
+    "recenter": "Centriraj",
+    "sync": "Sinkroniziraj kartu",
+    "syncing": "Sinkroniziram…",
+    "villageCount": "{{count}} sela",
+    "lastSynced": "sinkronizirano {{when}}",
+    "empty": "Još nema podataka karte za ovaj server. Klikni \"Sinkroniziraj kartu\" za dohvat najnovijeg map.sql.",
+    "pop": "Pop",
+    "inactive": "Neaktivan",
+    "inactiveDimmed": "Neaktivni (zatamnjeni)"
+  },
+  "telegram": {
+    "subtitle": "Push obavijesti u Telegram chat preko bota.",
+    "connection": {
+      "title": "Povezivanje",
+      "hint": "Napravi bota preko @BotFather za token, zatim mu pošalji poruku (ili ga dodaj u grupu) da može objavljivati. Sve ispod je onemogućeno dok oba polja nisu postavljena.",
+      "enabled": "Uključi Telegram obavijesti",
+      "enabledHint": "Glavni prekidač. Isključeno gasi svaku Telegram objavu bez obzira na pojedinačne okidače.",
+      "botToken": "Bot token",
+      "botTokenHint": "Od @BotFather, izgleda kao 123456789:ABCdef… Drži ga u tajnosti — tko ga ima može objavljivati kao tvoj bot.",
+      "chatId": "Chat id",
+      "chatIdHint": "Numerički id korisnika/grupe, ili @channelname za kanal. Koristi @userinfobot za svoj numerički id."
+    },
+    "test": {
+      "button": "Pošalji test",
+      "sending": "Šaljem…",
+      "tooltip": "Pošalji kratku probnu poruku na spremljeni chat. Zaobilazi glavni prekidač.",
+      "disabledNoConfig": "Prvo postavi bot token i chat id.",
+      "disabledDirty": "Spremi promjene prije testiranja."
+    }
+  },
+  "discord": {
+    "pageTitle": "Discord",
+    "pageSubtitle": "Šalji bot obavijesti u Discord kanal preko webhook-a. Stvori webhook u Integrations panelu kanala, zalijepi URL ispod i odaberi koji događaji te pinguju.",
+    "webhook": {
+      "title": "Webhook",
+      "hint": "Jedna točka povezivanja između bota i Discord kanala. Sve ispod je zaključano dok URL nije postavljen.",
+      "enabled": "Šalji Discord obavijesti",
+      "enabledHint": "Glavni prekidač. Isključeno znači nema poruka iako su pojedinačni okidači uključeni.",
+      "url": "Webhook URL",
+      "urlHint": "Bilo tko s ovim URL-om može slati poruke — tretiraj ga kao lozinku."
+    },
+    "test": {
+      "button": "Pošalji probnu poruku",
+      "sending": "Šaljem…",
+      "tooltip": "Pošalji kratku probnu poruku na spremljen webhook. Zaobilazi glavni prekidač.",
+      "disabledNoUrl": "Prvo zalijepi webhook URL.",
+      "disabledDirty": "Spremi promjene prije testiranja."
+    },
+    "identity": {
+      "title": "Identitet bota",
+      "hint": "Kako se bot predstavlja u Discord-u. Oba polja su opcionalna — Discord pokazuje webhook default kad su prazna.",
+      "username": "Prikazno ime",
+      "avatarUrl": "URL avatara",
+      "avatarHint": "Kvadratni PNG/JPG je najbolji izbor (Discord skalira na 128×128)."
+    },
+    "mentions": {
+      "title": "Pingovi",
+      "hint": "Opcionalno doda Discord @-mention ispred svake obavijesti da netko zaista bude obaviješten.",
+      "userId": "Korisnik (mention)",
+      "roleId": "Uloga (mention)",
+      "format": "Koristi doslovni Discord format. U Developer Mode klikni desno na korisnika/ulogu → Copy Mention; paste-aj točno tako."
+    },
+    "triggers": {
+      "title": "Okidači obavijesti",
+      "hint": "Odaberi koji događaji generiraju Discord poruku. Utišaj šumne, zadrži kritične.",
+      "incomingAttack": "Novi dolazni napad",
+      "incomingAttackHint": "Crveni napad upravo zabilježen (paste ili scrape).",
+      "incomingRaid": "Novi dolazni raid",
+      "incomingRaidHint": "Žuti raid se pojavio u listi.",
+      "returnCatch": "Return-catch prozor",
+      "returnCatchHint": "Planner uočio izlazni prozor za snipe na napadača.",
+      "captcha": "Captcha detektiran",
+      "captchaHint": "Browser sesija naišla na captcha — treba ga riješiti.",
+      "sessionLost": "Sesija odjavljena",
+      "sessionLostHint": "Browser sesija za neki račun je neočekivano odjavljena.",
+      "resourceOverflow": "Resursi pred prelijevanjem",
+      "resourceOverflowHint": "Skladište ili žitnica sela prešli ~95% kapaciteta — resursi će se uskoro gubiti."
     }
   },
   "statistics": {

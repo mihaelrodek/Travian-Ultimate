@@ -4,6 +4,8 @@ import com.travianbot.account.domain.Account;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -137,6 +139,30 @@ public class Village {
     @Column(name = "order_index", nullable = false)
     private int orderIndex;
 
+    /**
+     * Manual Tournament Square level (0..20) the user typed in for this
+     * village. {@code null} means "unknown" — the analyzer falls back to
+     * brute-forcing TS levels as before. When set, the inverse solver
+     * (and future return-catch math) can treat this as a fixed pin,
+     * shrinking the candidate space.
+     * <p>
+     * Stored on Village so it survives a Clear-all of the troop snapshots
+     * (the user shouldn't lose a hand-classified TS level just because they
+     * re-imported troop counts).
+     */
+    @Column(name = "ts_level")
+    private Integer tsLevel;
+
+    /**
+     * User-applied role tag (off hammer, deff, pve, …). Free for the
+     * frontend to read for ordering / filtering — the bot itself doesn't
+     * yet branch on it, but the field is plumbed end-to-end so the next
+     * planner pass can prefer e.g. OFF_HAMMER villages as snipe launchers.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "village_type", length = 16)
+    private VillageType villageType;
+
     @Column(nullable = false)
     private Instant createdAt;
 
@@ -179,9 +205,30 @@ public class Village {
     public Long getCurrentCropProduction() { return currentCropProduction; }
     public Instant getResourcesUpdatedAt() { return resourcesUpdatedAt; }
     public int getOrderIndex() { return orderIndex; }
+    public Integer getTsLevel() { return tsLevel; }
+    public VillageType getVillageType() { return villageType; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
     public List<BuildingQueueItem> getQueue() { return queue; }
+
+    /**
+     * Set the manual Tournament Square level. Caller is responsible for
+     * range-validating (0..20) — we treat anything else the same as null
+     * to keep the entity tolerant of bad input.
+     */
+    public void setTsLevel(Integer tsLevel) {
+        if (tsLevel != null && (tsLevel < 0 || tsLevel > 20)) {
+            this.tsLevel = null;
+        } else {
+            this.tsLevel = tsLevel;
+        }
+        touch();
+    }
+
+    public void setVillageType(VillageType villageType) {
+        this.villageType = villageType;
+        touch();
+    }
 
     public void setOrderIndex(int orderIndex) {
         this.orderIndex = orderIndex;

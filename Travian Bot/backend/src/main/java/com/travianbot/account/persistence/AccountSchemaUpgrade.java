@@ -57,14 +57,39 @@ public class AccountSchemaUpgrade {
             "alert_channels",
             "proxy_url",
             "proxy_username",
-            "proxy_password"
+            "proxy_password",
+            "headless"
     );
 
     @EventListener(ApplicationReadyEvent.class)
     public void upgrade() {
         ensurePlusAccountColumns();
         ensureNicknameColumn();
+        ensureHeadlessColumn();
         dropOrphanedAccountSettingsColumns();
+    }
+
+    /**
+     * Adds {@code account_settings.headless} (per-account "run Chromium
+     * headless" toggle). Idempotent — a plain {@code ADD COLUMN IF NOT EXISTS}
+     * with an inline default is safe on a populated table and a no-op once the
+     * column is present. Must run before {@link #dropOrphanedAccountSettingsColumns()},
+     * and {@code headless} must be in {@link #ACCOUNT_SETTINGS_CURRENT_COLUMNS},
+     * or the reconcile pass would drop the column we just added.
+     */
+    private void ensureHeadlessColumn() {
+        try {
+            if (columnExists("account_settings", "headless")) {
+                return;
+            }
+            jdbcTemplate.execute(
+                    "ALTER TABLE account_settings ADD COLUMN IF NOT EXISTS headless BOOLEAN NOT NULL DEFAULT FALSE");
+            log.info("Added account_settings.headless column (default FALSE)");
+        } catch (Exception e) {
+            log.warn("Could not ensure account_settings.headless column: {} — "
+                    + "if the table doesn't exist yet this is expected on first boot.",
+                    e.getMessage());
+        }
     }
 
     /**

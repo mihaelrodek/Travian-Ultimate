@@ -105,6 +105,8 @@ public class AccountSettingsService {
             s.setProxyPassword(req.proxyPassword().isEmpty() ? null : req.proxyPassword());
         }
 
+        s.setHeadless(req.headless());
+
         List<ActiveWindow> windows = new ArrayList<>();
         for (ActiveWindowDto dto : req.activeWindows()) {
             windows.add(new ActiveWindow(s, dto.dayOfWeek(), dto.startMinute(), dto.endMinute()));

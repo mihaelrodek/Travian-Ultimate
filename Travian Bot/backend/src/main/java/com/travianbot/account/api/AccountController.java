@@ -1,5 +1,6 @@
 package com.travianbot.account.api;
 
+import com.travianbot.account.api.dto.AccountCredentialsResponse;
 import com.travianbot.account.api.dto.AccountResponse;
 import com.travianbot.account.api.dto.CreateAccountRequest;
 import com.travianbot.account.api.dto.LoginResultResponse;
@@ -88,6 +89,17 @@ public class AccountController {
     @GetMapping("/{id}")
     public AccountResponse get(@PathVariable Long id) {
         return toResponse(accountService.get(id));
+    }
+
+    /**
+     * Returns the plaintext Travian password for a single account. Deliberately
+     * separate from {@link #get} / {@link #list} so the secret is only fetched
+     * on an explicit user action (reveal or edit) instead of on every poll. See
+     * {@link AccountCredentialsResponse} for the plaintext caveat.
+     */
+    @GetMapping("/{id}/credentials")
+    public AccountCredentialsResponse credentials(@PathVariable Long id) {
+        return AccountCredentialsResponse.from(accountService.get(id));
     }
 
     @PostMapping

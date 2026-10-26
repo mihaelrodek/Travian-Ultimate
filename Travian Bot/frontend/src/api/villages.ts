@@ -4,6 +4,7 @@ import type {
   BuildingQueueItem,
   Village,
   VillageCreate,
+  VillageType,
   VillageUpdate,
 } from '../types/village';
 
@@ -44,6 +45,16 @@ export const villagesApi = {
    */
   reorder: (accountId: number, villageIds: number[]) =>
     api.post<Village[]>(`/villages/reorder?accountId=${accountId}`, villageIds),
+
+  /**
+   * Partial update of the user-applied classification: TS level + village
+   * type. Either field may be null to clear. Used by the Village troops
+   * page inline editors.
+   */
+  classify: (
+    id: number,
+    body: { tsLevel: number | null; villageType: VillageType | null },
+  ) => api.patch<Village>(`/villages/${id}/classification`, body),
 };
 
 export const buildingCatalogApi = {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
+import GlassHeader from '../components/GlassHeader';
 import { useCurrentAccount } from '../hooks/useCurrentAccount';
 import { statisticsApi } from '../api/statistics';
 import type { HistoryResponse, StatCategory, Top10Response } from '../types/statistics';
@@ -164,6 +165,10 @@ export default function StatisticsPage() {
 
   return (
     <div className="stack stack--xwide">
+      <GlassHeader
+        title="Statistika"
+        subtitle="Top 10 + history po kategorijama. Snimanje svakih sat vremena."
+      />
       <Card>
         <div className="toolbar" style={{ gap: '0.75rem', flexWrap: 'wrap' }}>
           <label className="muted" htmlFor="stats-range">{t('statistics.range')}</label>

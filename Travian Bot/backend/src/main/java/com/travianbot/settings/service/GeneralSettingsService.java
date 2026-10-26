@@ -41,9 +41,13 @@ public class GeneralSettingsService {
         s.setTheme(req.theme());
         s.setLanguageEnum(req.language());
         s.setDesktopNotificationsEnabled(req.desktopNotificationsEnabled());
+        s.setSoundAlertsEnabled(req.soundAlertsEnabled());
         s.setDefaultCheckIntervalMinutes(req.defaultCheckIntervalMinutes());
         s.setMinClickDelayMs(req.minClickDelayMs());
         s.setMaxClickDelayMs(req.maxClickDelayMs());
+        s.setMaxActionsPerMinute(req.maxActionsPerMinute());
+        s.setVillageScrapingEnabled(req.villageScrapingEnabled());
+        s.setAutoReloginEnabled(req.autoReloginEnabled());
         return repository.save(s);
     }
 
@@ -55,6 +59,17 @@ public class GeneralSettingsService {
     public ClickDelayRange getClickDelayRange() {
         GeneralSettings s = get();
         return new ClickDelayRange(s.getMinClickDelayMs(), s.getMaxClickDelayMs());
+    }
+
+    /**
+     * Read-only accessor for the browser-action rate cap. Kept separate from
+     * the entity so the bot-client layer (which must stay cycle-free) can pull
+     * just this number through a supplier, the same way it does for the click
+     * delay range.
+     */
+    @Transactional(readOnly = true)
+    public int getMaxActionsPerMinute() {
+        return get().getMaxActionsPerMinute();
     }
 
     public record ClickDelayRange(int minMs, int maxMs) {

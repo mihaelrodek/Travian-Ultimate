@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Card from '../components/Card';
+import GlassHeader from '../components/GlassHeader';
 import { useCurrentAccount } from '../hooks/useCurrentAccount';
 import { heroApi } from '../api/hero';
 import { accountSettingsApi } from '../api/settings';
@@ -86,6 +87,10 @@ export default function HeroPage() {
 
   return (
     <div className="stack">
+      <GlassHeader
+        title="Heroj"
+        subtitle="Atributi, oprema, avanture + auto-postavke."
+      />
       {accountId == null ? (
         <Card>
           <p className="muted">Pick an account on the Accounts page to see the hero.</p>
@@ -316,6 +321,7 @@ function HeroSettingsCard({ accountId }: { accountId: number }) {
       proxyUsername: full.proxyUsername,
       // null => leave server-side password alone
       proxyPassword: null,
+      headless: full.headless,
       activeWindows: full.activeWindows,
     };
     try {

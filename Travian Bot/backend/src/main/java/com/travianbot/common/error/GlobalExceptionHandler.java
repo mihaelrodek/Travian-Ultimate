@@ -2,6 +2,7 @@ package com.travianbot.common.error;
 
 import com.travianbot.bot.client.browser.LoginFailedException;
 import com.travianbot.bot.scraper.NotLoggedInException;
+import com.travianbot.server.service.ServerAlreadyExistsException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -76,6 +77,18 @@ public class GlobalExceptionHandler {
                 req.getRequestURI()
         );
         return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(ServerAlreadyExistsException.class)
+    public ResponseEntity<ApiError> handleServerAlreadyExists(ServerAlreadyExistsException ex, HttpServletRequest req) {
+        // 409 Conflict — a row with this canonical url already exists.
+        ApiError body = ApiError.of(
+                HttpStatus.CONFLICT.value(),
+                "Conflict",
+                ex.getMessage(),
+                req.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     @ExceptionHandler(NotLoggedInException.class)

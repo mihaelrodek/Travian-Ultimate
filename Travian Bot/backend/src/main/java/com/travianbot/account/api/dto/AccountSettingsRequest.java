@@ -35,6 +35,8 @@ public record AccountSettingsRequest(
         String proxyUsername,
         String proxyPassword,
 
+        boolean headless,
+
         @Valid List<ActiveWindowDto> activeWindows
 ) {
 }

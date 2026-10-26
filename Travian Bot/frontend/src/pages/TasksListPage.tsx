@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../components/Card';
+import GlassHeader from '../components/GlassHeader';
 import { useCurrentAccount } from '../hooks/useCurrentAccount';
 import { tasksApi } from '../api/tasks';
 import { TASK_STATUSES, TASK_TYPES, type BotTask, type TaskStatus } from '../types/task';
@@ -104,12 +105,45 @@ export default function TasksListPage() {
     }
   };
 
+  // GlassHUD design surfaces three top-of-page counters: active queues,
+  // currently running, and completed today. Derived from the same `tasks`
+  // list the body already loads — no extra API.
+  const activeCount = tasks.filter((t) => t.status === 'PENDING').length;
+  const runningCount = tasks.filter((t) => t.status === 'RUNNING').length;
+  const completedTodayCount = tasks.filter((t) => {
+    if (t.status !== 'DONE') return false;
+    if (!t.completedAt) return false;
+    const d = new Date(t.completedAt);
+    const now = new Date();
+    return d.toDateString() === now.toDateString();
+  }).length;
+
   return (
     <div className="stack">
-      <div>
-        <h1 className="page__title">Tasks</h1>
-        <p className="page__subtitle">Queue of work for the bot on the active account.</p>
-      </div>
+      <GlassHeader
+        title="Zadaci"
+        subtitle="Redovi gradnje + automatizacije po računima."
+      />
+
+      {accountId != null && (
+        <div className="gh-stat-grid gh-stat-grid--3">
+          <div className="gh-stat">
+            <div className="gh-stat__label">AKTIVNI REDOVI</div>
+            <div className="gh-stat__value">{activeCount}</div>
+            <div className="gh-stat__delta">PENDING</div>
+          </div>
+          <div className="gh-stat">
+            <div className="gh-stat__label">U OBUCI</div>
+            <div className="gh-stat__value gh-stat__value--gradient">{runningCount}</div>
+            <div className="gh-stat__delta">RUNNING</div>
+          </div>
+          <div className="gh-stat">
+            <div className="gh-stat__label">ZAVRŠENO DANAS</div>
+            <div className="gh-stat__value">{completedTodayCount}</div>
+            <div className="gh-stat__delta gh-stat__delta--good">DONE</div>
+          </div>
+        </div>
+      )}
 
       {accountId == null && !accountsLoading && (
         <Card>

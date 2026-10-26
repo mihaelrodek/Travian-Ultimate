@@ -201,6 +201,42 @@ export default function AccountSettingsPanel({ accountId }: Props) {
               </div>
             </div>
           </SettingsGroup>
+
+          <SettingsGroup title="Browser">
+            <div className="form form--compact">
+              <label className="form__check form__field--full">
+                <input
+                  type="checkbox"
+                  checked={draft.headless}
+                  onChange={(e) => patch('headless', e.target.checked)}
+                />
+                <span>Run browser headless (no visible window)</span>
+              </label>
+              <p className="muted" style={{ margin: '0 0 0.5rem 1.6rem', fontSize: '0.8rem' }}>
+                Takes effect on the next login or restart. Leave off if you want to watch the
+                bot or hand-solve a captcha in the browser window.
+              </p>
+              <div className="settings-savebar">
+                <div className="settings-savebar__msg">
+                  {saveState.kind === 'saving' && <span className="muted">Saving…</span>}
+                  {saveState.kind === 'saved' && <span className="pill pill--success">Saved</span>}
+                  {saveState.kind === 'error' && (
+                    <span className="form__msg form__msg--error" style={{ margin: 0 }}>
+                      {saveState.message}
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="btn btn--primary btn--sm"
+                  onClick={save}
+                  disabled={saveState.kind === 'saving'}
+                >
+                  Save browser
+                </button>
+              </div>
+            </div>
+          </SettingsGroup>
         </div>
       </Card>
     </div>

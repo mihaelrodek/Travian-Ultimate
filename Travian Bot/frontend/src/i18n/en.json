@@ -17,9 +17,13 @@
   "nav": {
     "sections": {
       "accounts": "Accounts",
-      "game": "Game"
+      "game": "Game",
+      "defense": "Defense",
+      "integrations": "Integrations"
     },
+    "commandCenter": "Command Center",
     "accounts": "Accounts",
+    "addAccount": "Add account",
     "settings": "Settings",
     "villages": "Villages",
     "notes": "Notes",
@@ -29,6 +33,19 @@
     "hero": "Hero",
     "templates": "Templates",
     "aiAnalysis": "AI Analysis",
+    "incoming": "Incoming Attacks",
+    "intel": "Inactive Search",
+    "enemyIntel": "Enemy Intel",
+    "croppers": "Croppers",
+    "players": "Players",
+    "alliances": "Alliances",
+    "reportIncoming": "Report incoming attacks",
+    "troopCounts": "Village troops",
+    "attackPlanner": "Attack planner",
+    "travelCalc": "Travel time",
+    "map": "World map",
+    "discord": "Discord",
+    "telegram": "Telegram",
     "log": "Log",
     "collapse": "Collapse sidebar",
     "expand": "Expand sidebar",
@@ -49,7 +66,9 @@
       "theme.dark": "Dark",
       "theme.system": "System",
       "language": "Language",
-      "desktopNotifications": "Enable desktop notifications"
+      "desktopNotifications": "Enable desktop notifications",
+      "soundAlerts": "Play a sound on incoming attacks",
+      "soundAlertsHint": "Plays a short beep in the browser when a new incoming attack is detected while the app is open. Your browser may ask for permission to play sound on first use."
     },
     "humanization": {
       "title": "Humanization",
@@ -57,13 +76,103 @@
       "clickDelay": "Click delay (ms)",
       "clickDelayHint": "Both bounds must be 1–{{max}} ms and max ≥ min.",
       "min": "Min (ms)",
-      "max": "Max (ms)"
+      "max": "Max (ms)",
+      "rateLimit": "Max actions per minute",
+      "rateLimitHint": "Hard cap on browser actions per minute per account. The click delay spaces individual actions; this caps the sustained rate so a burst of scheduled work can't fire many requests in a few seconds. A short burst up to this value is allowed after idle time."
     },
     "scraping": {
       "title": "Scraping",
       "hint": "Controls how often the background scheduler refreshes data from the game. Shorter intervals mean fresher data but more network activity — pick values you'd be comfortable explaining to a human observer.",
       "defaultCheck": "Default check interval (minutes)",
-      "defaultCheckHint": "Fallback applied to accounts that don't have their own per-account interval configured."
+      "defaultCheckHint": "Fallback applied to accounts that don't have their own per-account interval configured.",
+      "villageScrapingEnabled": "Enable village auto-scraping",
+      "villageScrapingEnabledHint": "Global kill-switch. Turn off to silence every scheduled village scrape, no matter what each village's own setting says. Manual scrapes (Scan now, Scrape current/all) still work.",
+      "autoRelogin": "Auto re-login on lost session",
+      "autoReloginHint": "When a scheduled scrape finds the browser session gone, log back in automatically (at most one attempt per account every 10 minutes) and continue. Off by default — an unattended login can run into a captcha loop. Respects each account's active-hours window."
+    },
+    "_discordMoved": "Configure Discord under Integrations → Discord."
+  },
+  "map": {
+    "title": "World map",
+    "subtitle": "Every settled village from the daily map.sql — pan, zoom, hover for details.",
+    "pickServer": "Pick a Travian server above to load its world map.",
+    "recenter": "Recenter",
+    "sync": "Sync map data",
+    "syncing": "Syncing…",
+    "villageCount": "{{count}} villages",
+    "lastSynced": "synced {{when}}",
+    "empty": "No map data yet for this server. Hit \"Sync map data\" to pull the latest map.sql.",
+    "pop": "Pop",
+    "inactive": "Inactive",
+    "inactiveDimmed": "Inactive (dimmed)"
+  },
+  "telegram": {
+    "subtitle": "Push alerts to a Telegram chat via a bot.",
+    "connection": {
+      "title": "Connection",
+      "hint": "Create a bot with @BotFather to get a token, then message it (or add it to a group) so it can post. Everything below stays disabled until both fields are set.",
+      "enabled": "Enable Telegram notifications",
+      "enabledHint": "Master switch. Off suppresses every Telegram post regardless of the per-event toggles.",
+      "botToken": "Bot token",
+      "botTokenHint": "From @BotFather, looks like 123456789:ABCdef… Treat it as secret — anyone with it can post as your bot.",
+      "chatId": "Chat id",
+      "chatIdHint": "Numeric user/group id, or @channelname for a channel. Use @userinfobot to find your numeric id."
+    },
+    "test": {
+      "button": "Send test",
+      "sending": "Sending…",
+      "tooltip": "Post a quick test message to the saved chat. Bypasses the master switch.",
+      "disabledNoConfig": "Set the bot token and chat id first.",
+      "disabledDirty": "Save your changes before testing."
+    }
+  },
+  "discord": {
+    "pageTitle": "Discord",
+    "pageSubtitle": "Post bot alerts to a Discord channel via webhook. Create a webhook in the channel's Integrations panel, paste its URL below, and pick which events should ping you.",
+    "webhook": {
+      "title": "Webhook",
+      "hint": "The single connection point between the bot and your Discord channel. Everything below is dimmed until a URL is set.",
+      "enabled": "Send Discord notifications",
+      "enabledHint": "Master switch. Off means no posts even if individual triggers are enabled.",
+      "url": "Webhook URL",
+      "urlHint": "Anyone with this URL can post to the channel — treat it like a password."
+    },
+    "test": {
+      "button": "Send test message",
+      "sending": "Sending…",
+      "tooltip": "Post a quick test message to the saved webhook. Bypasses the master switch.",
+      "disabledNoUrl": "Paste a webhook URL first.",
+      "disabledDirty": "Save your changes before testing."
+    },
+    "identity": {
+      "title": "Bot identity",
+      "hint": "How the bot identifies itself in Discord. Both fields are optional — Discord shows the default webhook name/avatar if you leave them blank.",
+      "username": "Display name",
+      "avatarUrl": "Avatar URL",
+      "avatarHint": "Square PNG/JPG works best (Discord rescales to 128×128)."
+    },
+    "mentions": {
+      "title": "Mentions",
+      "hint": "Optionally prepend a Discord @-mention to every alert so it actually pings someone instead of silently posting.",
+      "userId": "User mention",
+      "roleId": "Role mention",
+      "format": "Use the literal Discord mention format. Right-click a user/role in Developer Mode → Copy Mention; paste verbatim."
+    },
+    "triggers": {
+      "title": "Notification triggers",
+      "hint": "Pick which events should generate a Discord post. Mute the chatty ones, keep the critical ones.",
+      "incomingAttack": "New incoming attack",
+      "incomingAttackHint": "A red-flag attack just got recorded (paste-in or scrape).",
+      "incomingRaid": "New incoming raid",
+      "incomingRaidHint": "A yellow-flag raid landed in the incoming list.",
+      "returnCatch": "Return-catch window opens",
+      "returnCatchHint": "Planner spotted a launchable snipe window on an attacker.",
+      "captcha": "Captcha detected",
+      "captchaHint": "Browser session hit a captcha challenge and needs you to solve it.",
+      "sessionLost": "Session logged out",
+      "sessionLostHint": "An account's browser session got logged out unexpectedly.",
+      "resourceOverflow": "Resources nearly overflowing",
+      "resourceOverflowHint": "A village's warehouse or granary crossed ~95% of capacity — resources are about to be wasted."
     }
   },
   "statistics": {

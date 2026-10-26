@@ -188,6 +188,21 @@ public class VillageService {
         return getDto(v.getId());
     }
 
+    /**
+     * Partial update — manual TS level + village-type tag. Either field may
+     * be {@code null} to clear that value. Doesn't touch any of the scraped
+     * fields (population, resources, queue, …) so it's safe to call from a
+     * UI inline editor without racing the scraper.
+     */
+    public VillageResponse updateClassificationDto(Long id, Integer tsLevel,
+                                                   com.travianbot.village.domain.VillageType type) {
+        Village v = repository.findById(id).orElseThrow(() -> new VillageNotFoundException(id));
+        v.setTsLevel(tsLevel);
+        v.setVillageType(type);
+        Village saved = repository.save(v);
+        return getDto(saved.getId());
+    }
+
     public void delete(Long id) {
         if (!repository.existsById(id)) throw new VillageNotFoundException(id);
         // Drop children first — they hold FKs to this village. The settings

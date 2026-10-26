@@ -31,6 +31,8 @@ public record AccountSettingsResponse(
         String proxyUsername,
         boolean proxyPasswordSet,
 
+        boolean headless,
+
         List<ActiveWindowDto> activeWindows
 ) {
     public static AccountSettingsResponse from(AccountSettings s) {
@@ -50,6 +52,8 @@ public record AccountSettingsResponse(
                 s.getProxyUrl(),
                 s.getProxyUsername(),
                 s.getProxyPassword() != null && !s.getProxyPassword().isBlank(),
+
+                s.isHeadless(),
 
                 s.getActiveWindows().stream().map(ActiveWindowDto::from).toList()
         );

@@ -1,8 +1,11 @@
 package com.travianbot.village.service;
 
 import com.travianbot.account.service.ActiveWindowGate;
+import com.travianbot.account.service.SessionRecoveryService;
 import com.travianbot.bot.client.browser.BrowserSessionManager;
+import com.travianbot.bot.scraper.NotLoggedInException;
 import com.travianbot.bot.scraper.ScrapingService;
+import com.travianbot.settings.service.GeneralSettingsService;
 import com.travianbot.village.domain.Village;
 import com.travianbot.village.domain.VillageSettings;
 import com.travianbot.village.persistence.VillageRepository;
@@ -33,9 +36,11 @@ import java.util.Map;
  * <ul>
  *   <li>{@code autoScrapeEnabled} — user can mute a village entirely so it
  *       doesn't fight with a UI that's actively scraping it.</li>
- *   <li>{@code sessionManager.hasOpenSession(accountId)} — we never trigger a
- *       login from the scheduler. If the user logged off, the village goes
- *       quiet until they come back.</li>
+ *   <li>{@code sessionManager.hasOpenSession(accountId)} — by default no login
+ *       is triggered from the scheduler; the village goes quiet until the user
+ *       comes back. With the opt-in {@code autoReloginEnabled} setting, a lost
+ *       session instead goes through {@link SessionRecoveryService} (one
+ *       cooldown-limited login attempt) before giving up.</li>
  *   <li>{@code travianVillageId != null} — can't target a village without a
  *       did; silently skip those (the sidebar scrape will eventually fill it).</li>
  * </ul>
@@ -52,19 +57,25 @@ public class VillageScrapeScheduler {
     private final BrowserSessionManager sessionManager;
     private final ScrapingService scrapingService;
     private final ActiveWindowGate activeWindowGate;
+    private final GeneralSettingsService generalSettingsService;
+    private final SessionRecoveryService sessionRecoveryService;
 
     public VillageScrapeScheduler(
             VillageRepository villageRepository,
             VillageSettingsRepository settingsRepository,
             BrowserSessionManager sessionManager,
             ScrapingService scrapingService,
-            ActiveWindowGate activeWindowGate
+            ActiveWindowGate activeWindowGate,
+            GeneralSettingsService generalSettingsService,
+            SessionRecoveryService sessionRecoveryService
     ) {
         this.villageRepository = villageRepository;
         this.settingsRepository = settingsRepository;
         this.sessionManager = sessionManager;
         this.scrapingService = scrapingService;
         this.activeWindowGate = activeWindowGate;
+        this.generalSettingsService = generalSettingsService;
+        this.sessionRecoveryService = sessionRecoveryService;
     }
 
     /**
@@ -74,26 +85,40 @@ public class VillageScrapeScheduler {
      */
     @Scheduled(fixedDelay = 60_000L, initialDelay = 45_000L)
     public void tick() {
+        // Hard kill-switch — user can disable every scheduled village scrape
+        // globally from the Settings page. Manual UI scrapes still work
+        // because they don't run through this scheduler.
+        if (!generalSettingsService.get().isVillageScrapingEnabled()) {
+            log.debug("VillageScrapeScheduler: globally disabled — skipping tick");
+            return;
+        }
         List<DueEntry> due = findDue();
         if (due.isEmpty()) return;
 
         log.info("VillageScrapeScheduler: {} village(s) due this tick", due.size());
         for (DueEntry entry : due) {
-            if (!sessionManager.hasOpenSession(entry.accountId())) {
-                log.debug("Skipping village {} — no open browser session for account {}",
-                        entry.villageId(), entry.accountId());
-                continue;
-            }
-            // Account-wide "active hours" gate — silences scheduled scrapes
-            // outside the user's allowed window. Manual UI scrapes still go
-            // through (they bypass the scheduler entirely).
+            // Account-wide "active hours" gate FIRST — it must also veto
+            // auto-relogin, otherwise a lost session would trigger a login at
+            // 3 am on an account whose window says 08:00–22:00. Manual UI
+            // scrapes still go through (they bypass the scheduler entirely).
             if (!activeWindowGate.isAllowedNow(entry.accountId())) {
                 log.debug("Skipping village {} — account {} outside active window",
                         entry.villageId(), entry.accountId());
                 continue;
             }
+            if (!sessionManager.hasOpenSession(entry.accountId())) {
+                // Opt-in recovery: one cooldown-limited login attempt; when
+                // disabled or still cooling down this returns false and the
+                // village stays quiet, exactly like the pre-P1.7 behaviour.
+                if (!sessionRecoveryService.tryRelogin(entry.accountId(),
+                        "scheduled scrape found no open session")) {
+                    log.debug("Skipping village {} — no open browser session for account {}",
+                            entry.villageId(), entry.accountId());
+                    continue;
+                }
+            }
             try {
-                scrapingService.scrapeVillage(entry.accountId(), entry.villageId());
+                scrapeWithRetry(entry);
             } catch (Exception e) {
                 // WARN not ERROR — a single failed scrape is expected during
                 // normal play (account just logged off, maintenance window, etc.)
@@ -101,6 +126,24 @@ public class VillageScrapeScheduler {
                 log.warn("Scheduled scrape failed for village {} (account {}): {}",
                         entry.villageId(), entry.accountId(), e.getMessage());
             }
+        }
+    }
+
+    /**
+     * One scrape, with a single auto-relogin retry if the session evaporated
+     * between the {@code hasOpenSession} check and the actual page fetch
+     * (server-side logout mid-rotation). A second {@link NotLoggedInException}
+     * propagates to the caller's catch — no loops.
+     */
+    private void scrapeWithRetry(DueEntry entry) {
+        try {
+            scrapingService.scrapeVillage(entry.accountId(), entry.villageId());
+        } catch (NotLoggedInException e) {
+            if (!sessionRecoveryService.tryRelogin(entry.accountId(),
+                    "session lost mid-scrape for village " + entry.villageId())) {
+                throw e;
+            }
+            scrapingService.scrapeVillage(entry.accountId(), entry.villageId());
         }
     }
 

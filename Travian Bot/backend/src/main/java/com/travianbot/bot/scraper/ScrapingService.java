@@ -17,6 +17,7 @@ import com.travianbot.village.persistence.ResourceFieldRepository;
 import com.travianbot.village.persistence.VillageRepository;
 import com.travianbot.village.service.NpcTradeService;
 import com.travianbot.village.service.QueueReconciliationService;
+import com.travianbot.village.service.ResourceOverflowMonitor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
@@ -59,6 +60,8 @@ public class ScrapingService {
     private final QueueReconciliationService queueReconciliationService;
     private final BotEventService botEventService;
     private final NpcTradeService npcTradeService;
+    private final ResourceOverflowMonitor resourceOverflowMonitor;
+    private final CaptchaResponseService captchaResponseService;
 
     public ScrapingService(
             BrowserSessionManager sessionManager,
@@ -68,7 +71,9 @@ public class ScrapingService {
             BuildingRepository buildingRepository,
             QueueReconciliationService queueReconciliationService,
             BotEventService botEventService,
-            NpcTradeService npcTradeService
+            NpcTradeService npcTradeService,
+            ResourceOverflowMonitor resourceOverflowMonitor,
+            CaptchaResponseService captchaResponseService
     ) {
         this.sessionManager = sessionManager;
         this.accountRepository = accountRepository;
@@ -78,6 +83,8 @@ public class ScrapingService {
         this.queueReconciliationService = queueReconciliationService;
         this.botEventService = botEventService;
         this.npcTradeService = npcTradeService;
+        this.resourceOverflowMonitor = resourceOverflowMonitor;
+        this.captchaResponseService = captchaResponseService;
     }
 
     /**
@@ -170,6 +177,18 @@ public class ScrapingService {
 
     // ---------- internals ----------
 
+    /**
+     * Abort the scrape if the fetched page is an anti-bot challenge instead of
+     * game content. The response service pauses the account and releases its
+     * browser BEFORE we throw, so by the time the exception reaches a
+     * scheduler the account is already quiet.
+     */
+    private void failIfCaptcha(Long accountId, Village target, String html, String where) {
+        if (!CaptchaDetector.looksLikeCaptcha(html)) return;
+        captchaResponseService.handleDetected(accountId, target == null ? null : target.getId(), where);
+        throw new CaptchaDetectedException(accountId, where);
+    }
+
     private BrowserTravianClient requireLoggedInClient(Long accountId) {
         BrowserTravianClient client = sessionManager.existing(accountId);
         if (client == null) {
@@ -193,6 +212,7 @@ public class ScrapingService {
                         : "");
         log.info("Scraping dorf1 for account {}: {}", account.getId(), dorf1Url);
         String dorf1Html = client.get(dorf1Url);
+        failIfCaptcha(account.getId(), target, dorf1Html, "dorf1");
 
         ParsedVillageHeader header = VillageHeaderParser.parse(dorf1Html);
         List<ParsedResourceField> fields = VillagePageParser.parseDorf1(dorf1Html);
@@ -240,6 +260,7 @@ public class ScrapingService {
         String dorf2Url = base + "/dorf2.php";
         log.info("Scraping dorf2 for account {}: {}", account.getId(), dorf2Url);
         String dorf2Html = client.get(dorf2Url);
+        failIfCaptcha(account.getId(), target, dorf2Html, "dorf2");
         List<ParsedBuilding> buildings = VillagePageParser.parseDorf2(dorf2Html);
 
         Village village = upsertVillage(account, target, header);
@@ -250,14 +271,18 @@ public class ScrapingService {
         // Stockpile + capacity from the `var resources = {...}` JS blob. Parsed
         // non-fatally — if the blob is missing, the scrape still succeeds with
         // fields + buildings populated; only the NPC trigger is skipped downstream.
+        boolean stockpileFresh = false;
         try {
-            VillageResourcesParser.parse(dorf1Html).ifPresent(s ->
-                    village.setStockpile(
-                            s.wood(), s.clay(), s.iron(), s.crop(),
-                            s.warehouseCapacity(), s.granaryCapacity(),
-                            s.cropProduction()
-                    )
-            );
+            var stockpile = VillageResourcesParser.parse(dorf1Html);
+            if (stockpile.isPresent()) {
+                var s = stockpile.get();
+                village.setStockpile(
+                        s.wood(), s.clay(), s.iron(), s.crop(),
+                        s.warehouseCapacity(), s.granaryCapacity(),
+                        s.cropProduction()
+                );
+                stockpileFresh = true;
+            }
         } catch (RuntimeException e) {
             log.warn("Stockpile parse failed for village {}: {}", village.getId(), e.getMessage());
         }
@@ -288,6 +313,13 @@ public class ScrapingService {
         }
         village.markScraped();
         villageRepository.save(village);
+
+        // Overflow check only on a fresh stockpile read — stale numbers from a
+        // previous scrape must not trigger (or suppress) an alert. The monitor
+        // is self-throttling and never throws.
+        if (stockpileFresh) {
+            resourceOverflowMonitor.check(village);
+        }
 
         log.info("Scrape complete for village {} (travianId={}): {} fields, {} buildings, {} sidebar entries",
                 village.getId(), village.getTravianVillageId(), fields.size(), buildings.size(), sidebar.size());

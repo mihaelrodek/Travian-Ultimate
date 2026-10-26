@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Card from '../components/Card';
 import FarmlistTargetsEditor from '../features/farmlists/FarmlistTargetsEditor';
+import FarmlistAnalyticsTab from '../features/farmlists/FarmlistAnalyticsTab';
 import { farmlistsApi } from '../api/farmlists';
 import { ApiException } from '../types/api';
 import type { Farmlist, FarmlistTarget } from '../types/farmlist';
+
+type DetailTab = 'targets' | 'analytics';
 
 type State =
   | { kind: 'loading' }
@@ -24,6 +27,9 @@ export default function FarmlistDetailPage() {
   const [enabledDraft, setEnabledDraft] = useState(true);
   const [targetsDraft, setTargetsDraft] = useState<FarmlistTarget[]>([]);
   const [save, setSaveState] = useState<SaveState>({ kind: 'idle' });
+  // Tab state lives locally — no need to thread it through the URL since the
+  // analytics view is purely a sub-view of the same farmlist.
+  const [tab, setTab] = useState<DetailTab>('targets');
 
   useEffect(() => {
     if (!id) return;
@@ -99,6 +105,32 @@ export default function FarmlistDetailPage() {
         <p className="page__subtitle">Account {fl.accountId} · {fl.targets.length} target(s)</p>
       </div>
 
+      {/* Minimal two-tab switcher. Local state only — no router involvement. */}
+      <div className="tabs" role="tablist" aria-label="Farmlist sections">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'targets'}
+          className={tab === 'targets' ? 'btn btn--primary' : 'btn btn--ghost'}
+          onClick={() => setTab('targets')}
+        >
+          Targets
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'analytics'}
+          className={tab === 'analytics' ? 'btn btn--primary' : 'btn btn--ghost'}
+          onClick={() => setTab('analytics')}
+        >
+          Analytics
+        </button>
+      </div>
+
+      {tab === 'analytics' ? (
+        <FarmlistAnalyticsTab accountId={fl.accountId} farmlistId={fl.id} />
+      ) : (
+      <>
       <Card title="Settings">
         <div className="form">
           <label className="form__field">
@@ -147,6 +179,8 @@ export default function FarmlistDetailPage() {
           {save.kind === 'saving' ? 'Saving…' : 'Save farmlist'}
         </button>
       </div>
+      </>
+      )}
     </div>
   );
 }

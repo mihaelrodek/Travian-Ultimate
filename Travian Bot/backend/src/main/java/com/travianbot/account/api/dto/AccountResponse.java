@@ -7,13 +7,13 @@ import java.time.Instant;
 /**
  * Representation of an Account returned to the frontend.
  * <p>
- * {@code password} is included because the account-detail page needs to be
- * able to show the existing value (blurred by default, reveal on click) and
- * prefill the inline edit form. Safe in this project because passwords are
- * already stored in plaintext (single-user, local-only bot) — when the
- * storage story changes to encrypted credentials the field should move to a
- * dedicated {@code /accounts/{id}/credentials} endpoint gated behind a
- * master password.
+ * The Travian login password is deliberately <b>not</b> part of this DTO. The
+ * list/detail endpoints are polled routinely (sidebar, detail page, context
+ * refresh) so shipping the plaintext password in every payload would spray it
+ * across the network and into the DOM for no reason. The account-detail page
+ * fetches it lazily from the dedicated {@code GET /accounts/{id}/credentials}
+ * endpoint only when the user clicks "Show" or opens the edit form. See
+ * {@link AccountCredentialsResponse}.
  * <p>
  * The {@code loggedIn} flag reflects current <i>live</i> browser-session state,
  * not the persisted {@code lastLoginStatus}. It is true only when the backend
@@ -25,7 +25,6 @@ public record AccountResponse(
         Long id,
         String serverUrl,
         String username,
-        String password,
         String nickname,
         Instant createdAt,
         Instant lastLoginAt,
@@ -51,7 +50,6 @@ public record AccountResponse(
                 account.getId(),
                 account.getServerUrl(),
                 account.getUsername(),
-                account.getPassword(),
                 account.getNickname(),
                 account.getCreatedAt(),
                 account.getLastLoginAt(),

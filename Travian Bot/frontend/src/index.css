@@ -1,131 +1,78 @@
 /*
- * Theme tokens.
+ * Theme tokens — single GlassHUD palette. All component rules below assume
+ * this palette; light theme is parked until we genuinely need it again.
  *
- * The palette is split into three passes that cascade:
- *   1. :root                      — light defaults.
- *   2. @media (prefers-color-scheme: dark) — OS-preference dark mode (fires when
- *      the user's GeneralSettings theme is SYSTEM, i.e. no data-theme attribute).
- *   3. :root[data-theme="light"|"dark"] — explicit user override from Settings.
+ * Three named colour roles + a few alias slots:
+ *   Surfaces  — bg / surface / surface-muted / surface-elevated
+ *   Strokes   — border / border-strong
+ *   Text      — text / text-muted (+ aliases muted, accent, surface-2)
  *
- * Contrast targets (WCAG AA):
- *   - body text on surface/bg        ≥ 7:1  (AAA where practical)
- *   - muted/secondary on surface     ≥ 4.5:1
- *   - accent text + link on surface  ≥ 4.5:1
- *   - border visibility              ≥ 1.5:1 vs adjacent surface
- *
- * Aliases at the bottom of each block (--muted, --surface-2, --accent) exist
- * because various components reference those names with no fallback — wiring
- * them to the real tokens keeps everything theme-aware.
+ * The aliases at the bottom exist because various components reference those
+ * names directly (.muted, --accent, etc.) — wiring them to the real tokens
+ * means we change a colour in ONE place.
  */
 :root {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
-  color-scheme: light dark;
+  color-scheme: dark;
 
-  /* Light — background & surfaces */
-  --bg: #f4f6f9;
-  --surface: #ffffff;
-  --surface-muted: #eceff4;
-  --surface-elevated: #ffffff;
+  /* --- GlassHUD palette --- */
+  --gh-base: #070a14;
+  --gh-cyan: #36e6ff;
+  --gh-purple: #a87bff;
+  --gh-blue: #7fb8ff;
+  --gh-blue-soft: #bfeaff;
+  --gh-good: #3fe0a0;
+  --gh-warn: #f5c94f;
+  --gh-danger: #ff5f9e;
+  --gh-danger-2: #ff8a5f;
+  --gh-danger-text: #ff7eb0;
+  --gh-danger-soft: #ff9ec2;
+  --gh-text: #e8edf6;
+  --gh-text-soft: #dfe6f2;
+  --gh-text-dim: #8c97ad;
+  --gh-text-faint: #6f7d96;
+  --gh-text-mute: #5f6b80;
 
-  /* Light — sidebar is intentionally dark in both themes for brand consistency */
-  --sidebar-bg: #10141a;
-  --sidebar-text: #d4dae4;
-  --sidebar-text-muted: #8c95a3;
-  --sidebar-active-bg: #1f2633;
-  --sidebar-active-text: #ffffff;
+  --gh-font-body:    'Manrope', system-ui, sans-serif;
+  --gh-font-display: 'Chakra Petch', system-ui, sans-serif;
+  --gh-font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
-  /* Light — structure + text */
-  --border: #d6dae2;
-  --border-strong: #b9bfca;
-  --text: #0f1419;
-  --text-muted: #4b5462;
+  /* Glass-surface aliases used by component rules further down. Kept as
+     separate tokens so individual panels can opt into a denser fill (e.g.
+     account-switcher) by mixing one of the alternates. */
+  --gh-glass-fill: rgba(255,255,255,0.045);
+  --gh-glass-fill-strong: rgba(255,255,255,0.08);
+  --gh-glass-border: rgba(255,255,255,0.10);
+  --gh-glass-border-strong: rgba(255,255,255,0.18);
 
-  /* Light — accent ramp */
-  --primary: #1d5bd6;
-  --primary-hover: #1849ac;
-  --success: #147a3f;
-  --danger: #b81f1f;
-  --danger-hover: #981919;
-  --warning: #8a5a00;
+  /* --- Token API (consumed by every component) --- */
+  --bg: var(--gh-base);
+  --surface: rgba(255,255,255,0.045);
+  --surface-muted: rgba(255,255,255,0.025);
+  --surface-elevated: rgba(255,255,255,0.08);
 
-  /* Aliases used by older components (keep in sync with the block above) */
+  --sidebar-bg: rgba(10,14,24,0.55);
+  --sidebar-text: var(--gh-text);
+  --sidebar-text-muted: var(--gh-text-dim);
+  --sidebar-active-bg: rgba(255,255,255,0.05);
+  --sidebar-active-text: var(--gh-blue-soft);
+
+  --border: rgba(255,255,255,0.10);
+  --border-strong: rgba(255,255,255,0.18);
+  --text: var(--gh-text);
+  --text-muted: var(--gh-text-dim);
+
+  --primary: var(--gh-cyan);
+  --primary-hover: var(--gh-blue-soft);
+  --success: var(--gh-good);
+  --danger: var(--gh-danger);
+  --danger-hover: var(--gh-danger-2);
+  --warning: var(--gh-warn);
+
   --muted: var(--text-muted);
   --surface-2: var(--surface-muted);
   --accent: var(--primary);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b0e13;
-    --surface: #151a22;
-    --surface-muted: #1d2330;
-    --surface-elevated: #20283a;
-
-    --sidebar-bg: #07090d;
-    --sidebar-text: #d0d7e3;
-    --sidebar-text-muted: #8590a2;
-    --sidebar-active-bg: #1d2435;
-    --sidebar-active-text: #ffffff;
-
-    --border: #2e3644;
-    --border-strong: #3c4557;
-    --text: #f0f3f8;
-    --text-muted: #a6b0c0;
-
-    --primary: #5b95ff;
-    --primary-hover: #7aa9ff;
-    --success: #4ec37a;
-    --danger: #f26a6a;
-    --danger-hover: #ff8585;
-    --warning: #f5c94f;
-  }
-}
-
-/* Forced theme (user override from Settings). Higher specificity than :root alone,
-   so these win against the prefers-color-scheme media query above. */
-:root[data-theme="light"] {
-  --bg: #f4f6f9;
-  --surface: #ffffff;
-  --surface-muted: #eceff4;
-  --surface-elevated: #ffffff;
-  --sidebar-bg: #10141a;
-  --sidebar-text: #d4dae4;
-  --sidebar-text-muted: #8c95a3;
-  --sidebar-active-bg: #1f2633;
-  --sidebar-active-text: #ffffff;
-  --border: #d6dae2;
-  --border-strong: #b9bfca;
-  --text: #0f1419;
-  --text-muted: #4b5462;
-  --primary: #1d5bd6;
-  --primary-hover: #1849ac;
-  --success: #147a3f;
-  --danger: #b81f1f;
-  --danger-hover: #981919;
-  --warning: #8a5a00;
-}
-
-:root[data-theme="dark"] {
-  --bg: #0b0e13;
-  --surface: #151a22;
-  --surface-muted: #1d2330;
-  --surface-elevated: #20283a;
-  --sidebar-bg: #07090d;
-  --sidebar-text: #d0d7e3;
-  --sidebar-text-muted: #8590a2;
-  --sidebar-active-bg: #1d2435;
-  --sidebar-active-text: #ffffff;
-  --border: #2e3644;
-  --border-strong: #3c4557;
-  --text: #f0f3f8;
-  --text-muted: #a6b0c0;
-  --primary: #5b95ff;
-  --primary-hover: #7aa9ff;
-  --success: #4ec37a;
-  --danger: #f26a6a;
-  --danger-hover: #ff8585;
-  --warning: #f5c94f;
 }
 
 * { box-sizing: border-box; }
@@ -133,8 +80,330 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--bg);
+  /* Softer ambient — dropped to roughly half the original alpha so the
+     background never competes with content for attention. */
+  background:
+    radial-gradient(900px 620px at 14% 8%,  rgba(54,160,255,.10), transparent 60%),
+    radial-gradient(820px 700px at 88% 16%, rgba(168,123,255,.09), transparent 62%),
+    radial-gradient(760px 640px at 60% 96%, rgba(54,230,200,.06), transparent 60%),
+    var(--gh-base);
+  background-attachment: fixed;
+  color: var(--gh-text);
+  font-family: var(--gh-font-body);
+}
+
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.14);
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ====================================================================== *
+ *  Light theme  ([data-theme="light"])
+ *  ------------------------------------------------------------------
+ *  Same GlassHUD chrome (glass cards, blur, accents) but flipped onto a
+ *  soft off-white base. Tokens are remapped, then a small set of
+ *  component-level rules fix the few spots where pure-token theming
+ *  isn't enough — sidebar / footer surfaces, card hover, scrollbar
+ *  thumb, pulse + status dots.
+ * ====================================================================== */
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #f4f6fb;
+  --surface: rgba(255,255,255,0.62);
+  --surface-muted: rgba(255,255,255,0.40);
+  --surface-elevated: rgba(255,255,255,0.78);
+
+  --sidebar-bg: rgba(248,250,253,0.75);
+  --sidebar-text: #0f1419;
+  --sidebar-text-muted: #586173;
+  --sidebar-active-bg: rgba(15,90,200,0.08);
+  --sidebar-active-text: #0b4ea3;
+
+  --border: rgba(15,20,30,0.10);
+  --border-strong: rgba(15,20,30,0.18);
+  --text: #0f1419;
+  --text-muted: #586173;
+
+  --primary: #0e8db5;
+  --primary-hover: #0a6f91;
+  --success: #1f8a5d;
+  --danger: #c93770;
+  --danger-hover: #a82b5e;
+  --warning: #b88500;
+
+  --muted: var(--text-muted);
+  --surface-2: var(--surface-muted);
+  --accent: var(--primary);
+
+  /* Glass aliases — dark-default uses white-tinted; light needs the same
+     light tint but with a slightly heavier border to stay visible. */
+  --gh-glass-fill: rgba(255,255,255,0.62);
+  --gh-glass-fill-strong: rgba(255,255,255,0.78);
+  --gh-glass-border: rgba(15,20,30,0.10);
+  --gh-glass-border-strong: rgba(15,20,30,0.18);
+
+  --gh-text: #0f1419;
+  --gh-text-soft: #1a212c;
+  --gh-text-dim: #586173;
+  --gh-text-faint: #6b7589;
+  --gh-text-mute: #8b94a4;
+}
+
+:root[data-theme="light"] body {
+  background:
+    radial-gradient(900px 620px at 14% 8%,  rgba(54,160,255,.16), transparent 60%),
+    radial-gradient(820px 700px at 88% 16%, rgba(168,123,255,.13), transparent 62%),
+    radial-gradient(760px 640px at 60% 96%, rgba(54,230,200,.10), transparent 60%),
+    var(--bg);
   color: var(--text);
+}
+
+:root[data-theme="light"] .sidebar {
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
+}
+:root[data-theme="light"] .gh-account-switcher {
+  background: rgba(255,255,255,0.5);
+  border-color: var(--border);
+}
+:root[data-theme="light"] .gh-account-switcher:hover {
+  background: rgba(255,255,255,0.7);
+  border-color: rgba(15,90,200,0.25);
+}
+:root[data-theme="light"] .gh-account-switcher__name { color: var(--text); }
+:root[data-theme="light"] .gh-account-switcher__status { color: var(--text-muted); }
+
+:root[data-theme="light"] .sidebar__link { color: var(--text-muted); }
+:root[data-theme="light"] .sidebar__link:hover {
+  background: rgba(15,20,30,0.05);
+  color: var(--text);
+}
+:root[data-theme="light"] .sidebar__link--active,
+:root[data-theme="light"] .sidebar__link.active,
+:root[data-theme="light"] a.sidebar__link.active {
+  background: linear-gradient(90deg, rgba(14,141,181,0.14), rgba(168,123,255,0.08));
+  border-color: rgba(14,141,181,0.30);
+  color: var(--sidebar-active-text);
+}
+:root[data-theme="light"] .sidebar__link--active .sidebar__icon { color: var(--sidebar-active-text); }
+:root[data-theme="light"] .sidebar__section-header { color: var(--text-muted); }
+:root[data-theme="light"] .sidebar__section-header:hover { color: var(--text); }
+:root[data-theme="light"] .sidebar__section-divider { background: var(--border); }
+
+:root[data-theme="light"] .gh-brand-collapse {
+  background: rgba(15,20,30,0.05);
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+:root[data-theme="light"] .gh-brand-collapse:hover {
+  background: rgba(15,20,30,0.10);
+  color: var(--text);
+}
+:root[data-theme="light"] .gh-brand-stack__main { color: var(--text); }
+:root[data-theme="light"] .gh-brand-stack__sub  { color: var(--primary); }
+
+:root[data-theme="light"] .gh-sidebar-footer {
+  border-top-color: var(--border);
+  color: var(--text-muted);
+}
+:root[data-theme="light"] .gh-sidebar-footer__log { color: var(--text-muted); }
+:root[data-theme="light"] .gh-sidebar-footer__log:hover { color: var(--text); }
+
+:root[data-theme="light"] .card {
+  background: var(--gh-glass-fill);
+  border-color: var(--gh-glass-border);
+  color: var(--text);
+  box-shadow:
+    0 4px 18px rgba(15,20,30,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.6);
+}
+:root[data-theme="light"] .card--muted { background: rgba(255,255,255,0.4); }
+:root[data-theme="light"] .card__title { color: var(--text); }
+:root[data-theme="light"] .card__hint  { color: var(--text-muted); }
+
+:root[data-theme="light"] .table th { color: var(--text-muted); border-bottom-color: var(--border); }
+:root[data-theme="light"] .table td { color: var(--text); border-bottom-color: rgba(15,20,30,0.06); }
+:root[data-theme="light"] .table tr:hover td { background: rgba(15,20,30,0.04); }
+
+:root[data-theme="light"] .form__field input,
+:root[data-theme="light"] .form__field select,
+:root[data-theme="light"] .form__field textarea,
+:root[data-theme="light"] .toolbar input,
+:root[data-theme="light"] .toolbar select,
+:root[data-theme="light"] .table input,
+:root[data-theme="light"] .table select,
+:root[data-theme="light"] input[type="text"],
+:root[data-theme="light"] input[type="number"],
+:root[data-theme="light"] input[type="datetime-local"],
+:root[data-theme="light"] textarea {
+  background: rgba(255,255,255,0.85);
+  border-color: var(--border);
+  color: var(--text);
+}
+:root[data-theme="light"] input:focus,
+:root[data-theme="light"] textarea:focus,
+:root[data-theme="light"] select:focus {
+  border-color: rgba(14,141,181,0.55);
+  box-shadow: 0 0 0 3px rgba(14,141,181,0.18);
+}
+:root[data-theme="light"] .form__field label,
+:root[data-theme="light"] .form__field { color: var(--text-muted); }
+
+:root[data-theme="light"] .btn--primary {
+  color: #fff;
+  border-color: rgba(14,141,181,0.40);
+  box-shadow: 0 2px 10px rgba(14,141,181,0.20);
+}
+:root[data-theme="light"] .btn--primary:hover:not(:disabled) {
+  box-shadow: 0 2px 14px rgba(14,141,181,0.32);
+}
+:root[data-theme="light"] .btn--ghost {
+  background: rgba(255,255,255,0.6);
+  color: var(--text);
+  border-color: var(--border);
+}
+:root[data-theme="light"] .btn--ghost:hover:not(:disabled) {
+  background: rgba(255,255,255,0.85);
+  border-color: rgba(14,141,181,0.30);
+}
+
+:root[data-theme="light"] .floating-queue-bar {
+  background: rgba(255,255,255,0.85);
+  border-top-color: var(--border);
+}
+:root[data-theme="light"] .floating-queue-bar__row {
+  background: rgba(255,255,255,0.7);
+  border-color: var(--border);
+}
+:root[data-theme="light"] .floating-queue-bar__row:hover {
+  background: rgba(14,141,181,0.08);
+  border-color: rgba(14,141,181,0.35);
+}
+
+:root[data-theme="light"] .gh-header {
+  background: rgba(255,255,255,0.6);
+  border-bottom-color: var(--border);
+}
+:root[data-theme="light"] .gh-header__title { color: var(--text); }
+:root[data-theme="light"] .gh-header__sub   { color: var(--text-muted); }
+:root[data-theme="light"] .gh-pill {
+  background: rgba(255,255,255,0.7);
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+:root[data-theme="light"] .gh-pill--clock { color: var(--primary); }
+
+:root[data-theme="light"] .gh-stat {
+  background: var(--gh-glass-fill);
+  border-color: var(--gh-glass-border);
+  box-shadow: 0 4px 18px rgba(15,20,30,0.06), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+:root[data-theme="light"] .gh-stat--danger {
+  background: rgba(255,229,236,0.7);
+  border-color: rgba(201,55,112,0.30);
+}
+:root[data-theme="light"] .gh-stat__label { color: var(--text-muted); }
+:root[data-theme="light"] .gh-stat__value { color: var(--text); }
+:root[data-theme="light"] .gh-stat__value--danger { color: var(--danger); }
+:root[data-theme="light"] .gh-stat__delta { color: var(--text-muted); }
+:root[data-theme="light"] .gh-stat__delta--danger { color: var(--danger); }
+
+:root[data-theme="light"] .gh-threat-card {
+  background: var(--gh-glass-fill);
+  border-color: rgba(201,55,112,0.32);
+}
+:root[data-theme="light"] .gh-threat-card__title   { color: var(--danger); }
+:root[data-theme="light"] .gh-threat-ring__time    { color: var(--danger); }
+:root[data-theme="light"] .gh-threat-ring__caption { color: var(--danger); }
+:root[data-theme="light"] .gh-threat-card__village { color: var(--text); }
+:root[data-theme="light"] .gh-threat-card__meta    { color: var(--text-muted); }
+
+:root[data-theme="light"] .gh-chart-card {
+  background: var(--gh-glass-fill);
+  border-color: var(--gh-glass-border);
+}
+:root[data-theme="light"] .gh-chart-card__title { color: var(--text); }
+:root[data-theme="light"] .gh-chart-card__hint  { color: var(--text-muted); }
+:root[data-theme="light"] .gh-chart-card__svg   { filter: drop-shadow(0 0 3px rgba(14,141,181,0.20)); }
+
+:root[data-theme="light"] .gh-feed-row { border-bottom-color: rgba(15,20,30,0.06); }
+:root[data-theme="light"] .gh-feed-row__msg  { color: var(--text); }
+:root[data-theme="light"] .gh-feed-row__time { color: var(--text-muted); }
+:root[data-theme="light"] .gh-rank-row       { color: var(--text); }
+:root[data-theme="light"] .gh-rank-row--you  { color: var(--primary); }
+:root[data-theme="light"] .gh-rank-row__pop  { color: var(--text-muted); }
+
+:root[data-theme="light"] .gh-defense-sublist .sidebar__link { color: var(--danger); }
+:root[data-theme="light"] .gh-defense-sublist .sidebar__link:hover {
+  background: rgba(201,55,112,0.08);
+  color: var(--danger-hover);
+}
+:root[data-theme="light"] .gh-add-account {
+  color: var(--primary) !important;
+}
+:root[data-theme="light"] .gh-add-account:hover {
+  background: rgba(14,141,181,0.08) !important;
+  color: var(--primary-hover) !important;
+}
+
+:root[data-theme="light"] .form__msg--error {
+  background: rgba(201,55,112,0.10);
+  border-color: rgba(201,55,112,0.30);
+  color: var(--danger);
+}
+:root[data-theme="light"] .form__msg--success,
+:root[data-theme="light"] .form__msg--ok {
+  background: rgba(31,138,93,0.10);
+  border-color: rgba(31,138,93,0.30);
+  color: var(--success);
+}
+
+:root[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(15,20,30,0.18); }
+
+/* SYSTEM mode: when no data-theme is set, follow the OS preference. The
+   unattributed :root above defaults to dark glass; this flip applies the
+   light palette when the OS asks for light. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]):not([data-theme="light"]) {
+    color-scheme: light;
+    --bg: #f4f6fb;
+    --surface: rgba(255,255,255,0.62);
+    --surface-muted: rgba(255,255,255,0.40);
+    --surface-elevated: rgba(255,255,255,0.78);
+    --sidebar-bg: rgba(248,250,253,0.75);
+    --sidebar-text: #0f1419;
+    --sidebar-text-muted: #586173;
+    --sidebar-active-bg: rgba(15,90,200,0.08);
+    --sidebar-active-text: #0b4ea3;
+    --border: rgba(15,20,30,0.10);
+    --border-strong: rgba(15,20,30,0.18);
+    --text: #0f1419;
+    --text-muted: #586173;
+    --primary: #0e8db5;
+    --primary-hover: #0a6f91;
+    --success: #1f8a5d;
+    --danger: #c93770;
+    --danger-hover: #a82b5e;
+    --warning: #b88500;
+    --muted: var(--text-muted);
+    --surface-2: var(--surface-muted);
+    --accent: var(--primary);
+    --gh-glass-fill: rgba(255,255,255,0.62);
+    --gh-glass-fill-strong: rgba(255,255,255,0.78);
+    --gh-glass-border: rgba(15,20,30,0.10);
+    --gh-glass-border-strong: rgba(15,20,30,0.18);
+    --gh-text: #0f1419;
+    --gh-text-soft: #1a212c;
+    --gh-text-dim: #586173;
+    --gh-text-faint: #6b7589;
+    --gh-text-mute: #8b94a4;
+  }
 }
 
 a { color: var(--primary); }
@@ -158,19 +427,13 @@ a { color: var(--primary); }
   min-width: 0; /* so tables don't blow out the grid */
 }
 
-.layout__topbar {
-  display: flex;
-  justify-content: flex-end;
-  padding: 1rem 2rem;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-}
+/* AppLayout no longer renders a topbar — the rule survives in case anything
+   still mounts content there in the future, but it intentionally collapses
+   to zero so it never reads as an "empty strip". */
+.layout__topbar { display: none; }
 
 .layout__main {
-  padding: 2rem;
-  /* Reserve room so the FloatingQueueBar doesn't hide the tail of any page's
-     scrolling content. Keep in sync with .floating-queue-bar's height. */
-  padding-bottom: 5.5rem;
+  padding: 18px 22px 7rem; /* bottom room for the FloatingQueueBar */
   flex: 1;
   overflow: auto;
 }
@@ -292,7 +555,17 @@ a { color: var(--primary); }
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent);
 }
 
-.sidebar__nav { display: flex; flex-direction: column; gap: 0.15rem; }
+.sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  /* Scroll inside the sidebar when nav overflows; brand + switcher pinned
+     above, footer pinned below, only this region scrolls. min-height:0 is
+     required for the overflow to take effect inside a flex column. */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
 
 .sidebar__link {
   display: flex;
@@ -469,31 +742,38 @@ a { color: var(--primary); }
   font-size: 0.95rem;
 }
 
-.stack { display: flex; flex-direction: column; gap: 1.25rem; max-width: 880px; }
-
-/* Wider stack for content that benefits from breathing room across the full
-   content column — e.g. the Accounts screens, which were otherwise floating
-   in a lot of empty space on normal-sized monitors. Caps at 1600px so the
-   layout doesn't stretch absurdly on ultrawide displays. */
-.stack--wide { max-width: min(90%, 1600px); }
-
-/* Extra-wide variant — about 15% wider than .stack--wide. Used by the
-   Villages master-detail page where the right pane (3 tabs of dense
-   tiles + queue table) was visibly cramped at 1600px on a normal 16:9
-   monitor. The 95% cap keeps a sliver of body padding on ultrawide. */
-.stack--xwide { max-width: min(95%, 1860px); }
+/* Dashboard layouts want the full width of the content column with the
+   sidebar already trimming things to a comfortable reading region. The
+   old 880px cap made every page feel cramped on a 1440px+ monitor. */
+.stack { display: flex; flex-direction: column; gap: 1rem; max-width: none; }
+.stack--wide  { max-width: none; }
+.stack--xwide { max-width: none; }
 
 /* ---------- Cards ---------- */
 
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 1.5rem;
+  border-radius: 18px;
+  padding: 1.1rem 1.25rem;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 8px 30px rgba(0,0,0,.25),
+    inset 0 1px 0 rgba(255,255,255,.06);
+  color: var(--gh-text);
 }
 
 .card--muted { background: var(--surface-muted); }
-.card__title { margin: 0 0 0.25rem; font-size: 1.05rem; }
+.card__title {
+  margin: 0 0 0.45rem;
+  font-size: 0.95rem;
+  font-family: var(--gh-font-display);
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--gh-text-soft);
+  text-transform: uppercase;
+}
 
 /* Header layout for cards whose title needs a right-aligned action — used by
    the Villages master list to host the collapse handle next to the title. */
@@ -1547,21 +1827,12 @@ a { color: var(--primary); }
   color: var(--text);
   white-space: nowrap;
 }
-.resource-pill--wood { background: #e8f1d6; color: #3d5618; border-color: #c9dca7; }
-.resource-pill--clay { background: #f5ddcc; color: #7a3a14; border-color: #e5bfa5; }
-.resource-pill--iron { background: #e1e5ec; color: #3a404b; border-color: #c3c9d3; }
-.resource-pill--crop { background: #f6e6b4; color: #6b4d0a; border-color: #e2cc82; }
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .resource-pill--wood { background: #2e3a1f; color: #d7e9b9; border-color: #4e6228; }
-  :root:not([data-theme="light"]) .resource-pill--clay { background: #4a2c1f; color: #f5cfb3; border-color: #6e432f; }
-  :root:not([data-theme="light"]) .resource-pill--iron { background: #2e313a; color: #d3d8e1; border-color: #4a4f5c; }
-  :root:not([data-theme="light"]) .resource-pill--crop { background: #4a3b12; color: #f6dc93; border-color: #6e591a; }
-}
-:root[data-theme="dark"] .resource-pill--wood { background: #2e3a1f; color: #d7e9b9; border-color: #4e6228; }
-:root[data-theme="dark"] .resource-pill--clay { background: #4a2c1f; color: #f5cfb3; border-color: #6e432f; }
-:root[data-theme="dark"] .resource-pill--iron { background: #2e313a; color: #d3d8e1; border-color: #4a4f5c; }
-:root[data-theme="dark"] .resource-pill--crop { background: #4a3b12; color: #f6dc93; border-color: #6e591a; }
+/* Resource-tinted pills — dark-on-dark variants only; the light ramps are
+   gone with the rest of the light theme. */
+.resource-pill--wood { background: #2e3a1f; color: #d7e9b9; border-color: #4e6228; }
+.resource-pill--clay { background: #4a2c1f; color: #f5cfb3; border-color: #6e432f; }
+.resource-pill--iron { background: #2e313a; color: #d3d8e1; border-color: #4a4f5c; }
+.resource-pill--crop { background: #4a3b12; color: #f6dc93; border-color: #6e591a; }
 
 .badge {
   display: inline-block;
@@ -2543,5 +2814,1004 @@ a { color: var(--primary); }
 .account-toolbar__dot--offline {
   background: #ef4444;
   box-shadow: 0 0 0 2px color-mix(in srgb, #ef4444 25%, transparent);
+}
+
+/* ====================================================================== *
+ *  GlassHUD theme  ([data-theme="glasshud"])
+ *  ------------------------------------------------------------------
+ *  Dark glassmorphic theme — frosted-glass surfaces over a radial-gradient
+ *  base with cyan / purple / pink neon accents. Built as a token override
+ *  + a few targeted component overrides so existing pages flip to the new
+ *  look without per-page edits. Activated by setting
+ *  &lt;html data-theme="glasshud"&gt; (default in index.html).
+ * ====================================================================== */
+
+{
+  /* --- Palette (named tokens for reference) --- */
+  --gh-base:        #070a14;
+  --gh-glass-fill:  rgba(255,255,255,0.045);
+  --gh-glass-fill-strong: rgba(255,255,255,0.08);
+  --gh-glass-border: rgba(255,255,255,0.10);
+  --gh-glass-border-strong: rgba(255,255,255,0.18);
+  --gh-text:        #e8edf6;
+  --gh-text-soft:   #dfe6f2;
+  --gh-text-dim:    #8c97ad;
+  --gh-text-faint:  #6f7d96;
+  --gh-text-mute:   #5f6b80;
+  --gh-cyan:        #36e6ff;
+  --gh-purple:      #a87bff;
+  --gh-blue:        #7fb8ff;
+  --gh-blue-soft:   #bfeaff;
+  --gh-good:        #3fe0a0;
+  --gh-warn:        #f5c94f;
+  --gh-danger:      #ff5f9e;
+  --gh-danger-2:    #ff8a5f;
+  --gh-danger-text: #ff7eb0;
+  --gh-danger-soft: #ff9ec2;
+  --gh-danger-fill: rgba(255,95,158,0.08);
+  --gh-danger-border: rgba(255,95,158,0.32);
+
+  --gh-font-body:   'Manrope', system-ui, sans-serif;
+  --gh-font-display:'Chakra Petch', system-ui, sans-serif;
+  --gh-font-mono:   'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* --- Map onto the existing token API --- */
+  --bg: var(--gh-base);
+  --surface: var(--gh-glass-fill);
+  --surface-muted: rgba(255,255,255,0.025);
+  --surface-elevated: rgba(255,255,255,0.06);
+
+  --sidebar-bg: rgba(10,14,24,0.55);
+  --sidebar-text: var(--gh-text);
+  --sidebar-text-muted: var(--gh-text-dim);
+  --sidebar-active-bg: rgba(255,255,255,0.05);
+  --sidebar-active-text: var(--gh-blue-soft);
+
+  --border: var(--gh-glass-border);
+  --border-strong: var(--gh-glass-border-strong);
+  --text: var(--gh-text);
+  --text-muted: var(--gh-text-dim);
+
+  --primary: var(--gh-cyan);
+  --primary-hover: var(--gh-blue-soft);
+  --success: var(--gh-good);
+  --danger: var(--gh-danger);
+  --danger-hover: var(--gh-danger-2);
+  --warning: var(--gh-warn);
+
+  --muted: var(--text-muted);
+  --surface-2: var(--surface-muted);
+  --accent: var(--primary);
+
+  font-family: var(--gh-font-body);
+}
+
+/* (Old duplicate body declaration removed — the softer primary one at the top
+   of the file is the canonical glass background.) */
+
+/* Headings / brand / nav-ish strings use Chakra Petch — only inside this theme. */
+h1,
+h2,
+h3,
+h4,
+.page__title,
+.card__title,
+.gh-display {
+  font-family: var(--gh-font-display);
+  letter-spacing: .02em;
+}
+
+.gh-mono,
+.input--mono {
+  font-family: var(--gh-font-mono);
+}
+
+/* Custom scrollbars to match the dark glass aesthetic. */
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.14);
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ---- Cards become glass panels ---- */
+.card {
+  background: var(--gh-glass-fill);
+  border: 1px solid var(--gh-glass-border);
+  border-radius: 18px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 8px 30px rgba(0,0,0,.25),
+    inset 0 1px 0 rgba(255,255,255,.06);
+  color: var(--gh-text);
+}
+.card--muted {
+  background: rgba(255,255,255,0.025);
+}
+.card__title {
+  color: var(--gh-text-soft);
+  font-family: var(--gh-font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: .03em;
+}
+.card__hint {
+  color: var(--gh-text-dim);
+  font-family: var(--gh-font-mono);
+  font-size: 0.78rem;
+  letter-spacing: .04em;
+}
+
+/* ---- Sidebar becomes a glass rail ---- */
+.sidebar {
+  background: rgba(10,14,24,0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255,255,255,0.08);
+  padding: 0;
+  gap: 0;
+}
+.sidebar__brand {
+  padding: 18px 16px 12px;
+  font-family: var(--gh-font-display);
+  color: var(--gh-text);
+}
+.sidebar__brand-dot {
+  width: 34px; height: 34px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, var(--gh-cyan), var(--gh-purple));
+  /* Halved the glow alpha so the logo no longer dominates the sidebar. */
+  box-shadow: 0 0 12px rgba(54,230,255,.22);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.sidebar__collapse-btn {
+  border: 1px solid rgba(255,255,255,0.10);
+  color: var(--gh-text-dim);
+  margin: 0 12px 8px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 9px;
+}
+.sidebar__collapse-btn:hover {
+  color: var(--gh-text);
+  background: rgba(255,255,255,0.08);
+}
+.sidebar__nav {
+  padding: 6px 12px 12px;
+  gap: 0;
+  /* Re-assert flex/overflow here — the GlassHUD override block previously
+     unset `flex:1` by setting `gap:0` only. Keep the nav as the lone
+     scrolling region inside the sidebar so brand/switcher and footer
+     stay pinned. */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.sidebar__section-header {
+  font-family: var(--gh-font-mono);
+  font-size: 9.5px;
+  letter-spacing: .16em;
+  color: var(--gh-text-mute);
+  text-transform: uppercase;
+  margin: 15px 6px 6px;
+  padding: 0;
+}
+.sidebar__section-header:hover {
+  color: var(--gh-blue-soft);
+}
+.sidebar__section-divider {
+  background: rgba(255,255,255,.08);
+  margin: 12px 0;
+}
+.sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
+  border-radius: 11px;
+  border: 1px solid transparent;
+  font-family: var(--gh-font-display);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--gh-text-dim);
+  letter-spacing: .02em;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.sidebar__link:hover {
+  color: var(--gh-text);
+  background: rgba(255,255,255,.05);
+}
+.sidebar__link--active,
+.sidebar__link.active,
+a.sidebar__link.active {
+  /* Softer active gradient — cyan/purple still readable but less in-your-face. */
+  background: linear-gradient(90deg, rgba(54,230,255,.10), rgba(168,123,255,.06));
+  border-color: rgba(124,200,255,.22);
+  color: var(--gh-blue-soft);
+  font-weight: 600;
+}
+.sidebar__link--active .sidebar__icon {
+  color: var(--gh-blue-soft);
+}
+.sidebar__icon {
+  width: 17px;
+  color: currentColor;
+}
+.sidebar__sublist {
+  border-left: 1px solid rgba(255,255,255,.10);
+  margin-left: 14px;
+  padding: 2px 0 3px 13px;
+  gap: 2px;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar__sublist .sidebar__link {
+  font-family: var(--gh-font-body);
+  font-size: 12.5px;
+  padding: 7px 10px;
+  border-radius: 9px;
+}
+.sidebar__account-dot--active {
+  background: var(--gh-good);
+  box-shadow: 0 0 4px rgba(63,224,160,.45);
+}
+.sidebar__account-dot--offline {
+  background: var(--gh-danger);
+  box-shadow: 0 0 4px rgba(255,95,158,.45);
+}
+.sidebar__account-dot--inactive {
+  background: var(--gh-text-faint);
+}
+.sidebar__account--active {
+  color: var(--gh-text-soft);
+}
+.sidebar__account--offline {
+  color: var(--gh-danger-text);
+}
+.sidebar__account--inactive {
+  color: var(--gh-text-dim);
+}
+
+/* ---- Buttons ---- */
+.btn {
+  font-family: var(--gh-font-display);
+  letter-spacing: .03em;
+  border-radius: 10px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.05s, box-shadow 0.15s;
+}
+.btn--primary {
+  background: linear-gradient(135deg, var(--gh-cyan), var(--gh-purple));
+  color: #08101e;
+  border: 1px solid rgba(124,200,255,.30);
+  /* Glow trimmed back so the button reads as a clear CTA, not a flashlight. */
+  box-shadow: 0 0 10px rgba(54,230,255,.12);
+  font-weight: 700;
+}
+.btn--primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--gh-blue-soft), var(--gh-purple));
+  box-shadow: 0 0 14px rgba(54,230,255,.22);
+}
+.btn--ghost {
+  background: rgba(255,255,255,.05);
+  color: var(--gh-text-soft);
+  border-color: rgba(255,255,255,.10);
+}
+.btn--ghost:hover:not(:disabled) {
+  background: rgba(255,255,255,.10);
+  border-color: rgba(124,200,255,.30);
+  color: var(--gh-text);
+}
+.btn--danger {
+  background: linear-gradient(135deg, var(--gh-danger), var(--gh-danger-2));
+  color: #0a0e18;
+  border: 1px solid rgba(255,95,158,.5);
+  font-weight: 700;
+}
+.btn--danger:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+/* ---- Tables ---- */
+.table th {
+  color: var(--gh-text-dim);
+  font-family: var(--gh-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: .12em;
+  border-bottom: 1px solid var(--gh-glass-border);
+}
+.table td {
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  color: var(--gh-text-soft);
+}
+.table tr:hover td {
+  background: rgba(255,255,255,.04);
+}
+
+/* ---- Forms ---- */
+.form__field input,
+.form__field select,
+.form__field textarea,
+.toolbar input,
+.toolbar select,
+.table input,
+.table select,
+input[type="text"]:not(.form__field input),
+input[type="number"]:not(.form__field input),
+input[type="datetime-local"],
+textarea:not(.form__field textarea) {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.1);
+  color: var(--gh-text);
+  border-radius: 8px;
+}
+.form__field input:focus,
+.form__field select:focus,
+.form__field textarea:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: rgba(54,230,255,.55);
+  box-shadow: 0 0 0 3px rgba(54,230,255,.18);
+}
+.form__field label,
+.form__field {
+  color: var(--gh-text-dim);
+  font-family: var(--gh-font-mono);
+  font-size: .78rem;
+  letter-spacing: .04em;
+}
+
+.form__msg--error {
+  background: var(--gh-danger-fill);
+  border-color: var(--gh-danger-border);
+  color: var(--gh-danger-text);
+}
+.form__msg--success,
+.form__msg--ok {
+  background: rgba(63,224,160,.10);
+  border-color: rgba(63,224,160,.35);
+  color: var(--gh-good);
+}
+
+/* ---- Pills + chips ---- */
+.pill,
+.chip,
+.status-badge {
+  font-family: var(--gh-font-mono);
+  letter-spacing: .04em;
+}
+.pill--success {
+  color: var(--gh-good);
+  background: rgba(63,224,160,.10);
+  border-color: rgba(63,224,160,.4);
+}
+.pill--danger,
+.pill--error {
+  color: var(--gh-danger-text);
+  background: var(--gh-danger-fill);
+  border-color: var(--gh-danger-border);
+}
+.pill--warn {
+  color: var(--gh-warn);
+  background: rgba(245,201,79,.10);
+  border-color: rgba(245,201,79,.4);
+}
+.pill--info {
+  color: var(--gh-blue-soft);
+  background: rgba(127,184,255,.10);
+  border-color: rgba(127,184,255,.4);
+}
+
+/* ---- Layout topbar ---- */
+.layout__topbar {
+  background: rgba(10,14,24,0.4);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* ---- Floating queue bar (bottom) — translucent ---- */
+.floating-queue-bar {
+  background: rgba(10,14,24,0.65);
+  border-top: 1px solid rgba(255,255,255,.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 -2px 16px rgba(0,0,0,.35);
+}
+.floating-queue-bar__row {
+  background: rgba(255,255,255,.04);
+  border-color: var(--gh-glass-border);
+}
+.floating-queue-bar__row:hover {
+  background: rgba(54,230,255,.08);
+  border-color: rgba(54,230,255,.4);
+}
+
+/* ---- Page subtitle softer in dark ---- */
+.page__subtitle,
+.muted {
+  color: var(--gh-text-dim);
+}
+
+/* ---- Tabs ---- */
+.tabs {
+  border-bottom-color: rgba(255,255,255,.10);
+}
+.tab {
+  color: var(--gh-text-dim);
+  font-family: var(--gh-font-display);
+}
+.tab:hover {
+  color: var(--gh-text);
+  background: rgba(255,255,255,.04);
+}
+.tab--active {
+  color: var(--gh-cyan);
+  border-bottom-color: var(--gh-cyan);
+  background: rgba(54,230,255,.08);
+}
+
+/* ===========================================================
+   Command Center bespoke pieces — used by CommandCenterPage
+   =========================================================== */
+
+.gh-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.gh-stat-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 1100px) {
+  .gh-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gh-stat-grid--3 { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .gh-stat-grid { grid-template-columns: 1fr; }
+}
+
+.gh-stat {
+  background: rgba(255,255,255,0.045);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 18px;
+  padding: 16px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 8px 30px rgba(0,0,0,.25),
+    inset 0 1px 0 rgba(255,255,255,.06);
+}
+.gh-stat--danger {
+  background: rgba(255,95,158,0.08);
+  border-color: rgba(255,95,158,0.32);
+}
+.gh-stat__label {
+  font-family: var(--gh-font-mono, ui-monospace, monospace);
+  font-size: 9.5px;
+  letter-spacing: .14em;
+  color: var(--gh-text-dim, #8c97ad);
+  text-transform: uppercase;
+}
+.gh-stat__value {
+  font-family: var(--gh-font-mono, ui-monospace, monospace);
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: 9px;
+  color: #eaf0fb;
+  font-variant-numeric: tabular-nums;
+}
+.gh-stat__value--gradient {
+  background: linear-gradient(90deg, #36e6ff, #a87bff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.gh-stat__value--danger { color: #ff7eb0; }
+.gh-stat__delta {
+  font-family: var(--gh-font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  margin-top: 8px;
+  color: var(--gh-text-faint, #7c8aa3);
+}
+.gh-stat__delta--good { color: var(--gh-good, #3fe0a0); }
+.gh-stat__delta--danger { color: #ff7eb0; }
+
+.gh-row {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+.gh-row--threat { grid-template-columns: 0.9fr 1.6fr; }
+.gh-row--feed   { grid-template-columns: 1fr 1.5fr; }
+@media (max-width: 1100px) {
+  .gh-row--threat,
+  .gh-row--feed { grid-template-columns: 1fr; }
+}
+
+.gh-threat-card {
+  background: rgba(255,255,255,0.045);
+  border: 1px solid rgba(255,95,158,0.28);
+  border-radius: 18px;
+  padding: 18px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 8px 30px rgba(0,0,0,.25),
+    inset 0 1px 0 rgba(255,255,255,.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.gh-threat-card__title {
+  align-self: flex-start;
+  font-family: var(--gh-font-display, system-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: #ff9ec2;
+}
+.gh-threat-ring {
+  position: relative;
+  width: 170px;
+  height: 170px;
+  margin: 14px 0 6px;
+}
+.gh-threat-ring__inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.gh-threat-ring__time {
+  font-family: var(--gh-font-mono, ui-monospace, monospace);
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffd0e2;
+  letter-spacing: -.01em;
+}
+.gh-threat-ring__caption {
+  font-family: var(--gh-font-mono, ui-monospace, monospace);
+  font-size: 9px;
+  letter-spacing: .16em;
+  color: #ff9ec2;
+  margin-top: 4px;
+}
+.gh-threat-card__village {
+  font-family: var(--gh-font-body, system-ui);
+  font-size: 13px;
+  font-weight: 700;
+  color: #eaf0fb;
+}
+.gh-threat-card__meta {
+  font-family: var(--gh-font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  color: var(--gh-text-dim, #8c97ad);
+  margin-top: 2px;
+}
+
+.gh-chart-card {
+  background: rgba(255,255,255,0.045);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 18px;
+  padding: 18px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 8px 30px rgba(0,0,0,.25),
+    inset 0 1px 0 rgba(255,255,255,.06);
+}
+.gh-chart-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.gh-chart-card__title {
+  font-family: var(--gh-font-display, system-ui);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  color: #dfe6f2;
+}
+.gh-chart-card__hint {
+  font-family: var(--gh-font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  color: var(--gh-text-faint, #7c8aa3);
+}
+.gh-chart-card__svg {
+  width: 100%;
+  height: 212px;
+  display: block;
+  overflow: visible;
+  filter: drop-shadow(0 0 4px rgba(54,230,255,.18));
+}
+
+.gh-feed-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.gh-feed-row:last-child { border-bottom: 0; }
+.gh-feed-row__time {
+  font-family: var(--gh-font-mono, ui-monospace, monospace);
+  font-size: 10.5px;
+  color: var(--gh-text-faint, #6f7d96);
+  min-width: 3.2rem;
+}
+.gh-feed-row__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 8px;
+}
+.gh-feed-row__msg {
+  font-family: var(--gh-font-body, system-ui);
+  font-size: 12.5px;
+  color: #d3dbe8;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gh-rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+.gh-rank-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--gh-font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  color: #d3dbe8;
+}
+.gh-rank-row--you { color: var(--gh-cyan, #36e6ff); font-weight: 700; }
+.gh-rank-row__pop { color: var(--gh-text-dim, #8c97ad); }
+
+/* ---- Topbar pills ---- */
+.gh-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.10);
+  font-family: var(--gh-font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  letter-spacing: .06em;
+  color: var(--gh-text-dim, #8c97ad);
+}
+.gh-pill--clock { color: var(--gh-blue-soft, #bfeaff); }
+
+/* ---- Sidebar footer (TS5 ONLINE) ---- */
+.gh-sidebar-footer {
+  padding: 11px 16px;
+  border-top: 1px solid rgba(255,255,255,.07);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--gh-font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  letter-spacing: .06em;
+  color: var(--gh-text-dim, #8c97ad);
+}
+.gh-sidebar-footer > span:first-child { flex: 1; }
+.gh-sidebar-footer__pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #36e6ff;
+  box-shadow: 0 0 6px rgba(54,230,255,.35);
+  animation: gh-pulse 2s infinite;
+  display: inline-block;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+@keyframes gh-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .4; }
+}
+.gh-sidebar-footer__log {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--gh-text-faint, #6f7d96);
+  text-decoration: none;
+}
+.gh-sidebar-footer__log:hover { color: var(--gh-text-soft, #dfe6f2); }
+
+/* Inline theme cycle button between backend pulse and LOG link. */
+.gh-sidebar-footer__theme {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--gh-text-faint, #6f7d96);
+  border-radius: 7px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.gh-sidebar-footer__theme:hover {
+  color: var(--gh-text-soft, #dfe6f2);
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.10);
+}
+:root[data-theme="light"] .gh-sidebar-footer__theme:hover {
+  color: var(--text);
+  background: rgba(15,20,30,0.05);
+  border-color: var(--border);
+}
+
+/* Variant when backend health pings fail — same pulse, red tint. */
+.gh-sidebar-footer__pulse--down {
+  background: var(--gh-danger, #ff5f9e);
+  box-shadow: 0 0 6px rgba(255,95,158,.35);
+}
+
+/* Collapse handle inside the brand row — pinned to the right edge. */
+.gh-brand-collapse {
+  margin-left: auto;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.10);
+  color: var(--gh-text-dim, #8c97ad);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.gh-brand-collapse:hover {
+  background: rgba(255,255,255,.10);
+  color: var(--gh-text, #e8edf6);
+  border-color: rgba(124,200,255,.30);
+}
+.sidebar--collapsed .gh-brand-collapse {
+  margin: 0 auto;
+}
+.sidebar--collapsed .sidebar__brand {
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 0 12px;
+  align-items: center;
+}
+
+/* ---- Brand logo SVG wrapper ---- */
+.gh-brand-logo {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #36e6ff, #a87bff);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 12px rgba(54,230,255,.22);
+}
+.gh-brand-stack {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+.gh-brand-stack__main {
+  font-family: var(--gh-font-display, system-ui);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: .02em;
+  color: var(--gh-text, #e8edf6);
+}
+.gh-brand-stack__sub {
+  font-family: var(--gh-font-mono, ui-monospace, monospace);
+  font-size: 9px;
+  letter-spacing: .18em;
+  color: var(--gh-blue, #7fb8ff);
+}
+
+/* ---- Header bar (page title + pills) ---- */
+.gh-header {
+  height: 56px;
+  flex: 0 0 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  background: rgba(10,14,24,0.35);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.gh-header__title {
+  font-family: var(--gh-font-display, system-ui);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: var(--gh-text, #e8edf6);
+  line-height: 1.1;
+}
+.gh-header__sub {
+  font-family: var(--gh-font-mono, ui-monospace, monospace);
+  font-size: 10.5px;
+  color: var(--gh-text-faint, #7c8aa3);
+  margin-top: 1px;
+}
+.gh-header__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Override the AppLayout topbar padding so it works as a thin glassy strip
+   in glasshud theme (default is 1rem 2rem which is too tall — the page-level
+   GlassHUD header inside CommandCenterPage already supplies the title/clock
+   chrome, so this row just hosts the BackendStatus pill on the right). */
+.layout__topbar {
+  padding: 8px 22px;
+  min-height: 44px;
+  align-items: center;
+}
+.layout__main {
+  padding: 18px 22px;
+  padding-bottom: 6rem;
+}
+
+/* AppLayout grid: the sidebar already has its own backdrop blur. Tighten
+   gap/margins to keep the content area edge-to-edge. */
+.layout {
+  background: transparent;
+}
+
+/* ---- Account switcher block (top of sidebar, under brand) ---- */
+.gh-account-switcher {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 12px 8px;
+  padding: 9px 10px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 13px;
+  background: rgba(255,255,255,.05);
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.12s, border-color 0.12s;
+}
+.gh-account-switcher:hover {
+  background: rgba(255,255,255,.08);
+  border-color: rgba(124,200,255,.3);
+}
+.gh-account-switcher__avatar {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #36e6ff, #a87bff);
+  color: #08101e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--gh-font-display, system-ui);
+  font-weight: 700;
+  font-size: 14px;
+}
+.gh-account-switcher__body {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  min-width: 0;
+  flex: 1;
+}
+.gh-account-switcher__name {
+  font-family: var(--gh-font-body, system-ui);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gh-text, #e8edf6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gh-account-switcher__status {
+  font-family: var(--gh-font-mono, ui-monospace, monospace);
+  font-size: 9.5px;
+  color: var(--gh-text-dim, #8c97ad);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: .06em;
+}
+.gh-account-switcher__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: 0 0 6px;
+}
+.gh-account-switcher__dot--online {
+  background: #3fe0a0;
+  box-shadow: 0 0 4px rgba(63,224,160,.45);
+}
+.gh-account-switcher__dot--offline {
+  background: #ff5f9e;
+  box-shadow: 0 0 4px rgba(255,95,158,.45);
+}
+.gh-account-switcher__server {
+  text-transform: uppercase;
+}
+
+/* ---- "Add account" CTA at end of accounts sublist ---- */
+.gh-add-account {
+  color: var(--gh-blue, #7fb8ff) !important;
+  font-weight: 600;
+  font-family: var(--gh-font-body, system-ui) !important;
+  font-size: 12px !important;
+  margin-left: 14px;
+  padding-left: 13px;
+}
+.gh-add-account:hover {
+  background: rgba(54,230,255,.08) !important;
+  color: var(--gh-blue-soft, #bfeaff) !important;
+}
+
+/* ---- Defense section badge + pink-rose sublist border ---- */
+.gh-defense-badge {
+  display: inline-block;
+  font-family: var(--gh-font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  /* Toned down — still reads as "alert" but no longer a hot neon swatch. */
+  background: linear-gradient(135deg, #c45a85, #c4795a);
+  color: #0a0e18;
+  border-radius: 6px;
+  padding: 1px 6px;
+  line-height: 1.2;
+}
+.gh-defense-badge--neutral {
+  background: rgba(255,255,255,.10);
+  color: var(--gh-text-soft, #dfe6f2);
+}
+
+.gh-defense-sublist {
+  margin: 2px 0 3px 14px;
+  padding-left: 13px;
+  border-left: 1px solid rgba(255,95,158,.25);
+}
+.gh-defense-sublist .sidebar__link {
+  color: var(--gh-danger-text, #ff7eb0);
+  font-weight: 600;
+  font-family: var(--gh-font-body, system-ui);
+  font-size: 12.5px;
+  padding: 7px 10px;
+  border-radius: 9px;
+}
+.gh-defense-sublist .sidebar__link:hover {
+  background: rgba(255,95,158,.08);
+  color: var(--gh-danger-soft, #ff9ec2);
 }
 

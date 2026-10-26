@@ -59,6 +59,13 @@ export default function AccountDetailPage() {
 
   const [showPassword, setShowPassword] = useState(false);
 
+  // The plaintext password is NOT part of the account payload — it is fetched
+  // lazily from /accounts/{id}/credentials on an explicit reveal or edit, then
+  // cached here. Reset to null whenever the account (re)loads so a stale
+  // password can never leak across accounts.
+  const [credPassword, setCredPassword] = useState<string | null>(null);
+  const [credLoading, setCredLoading] = useState(false);
+
   // Inline edit form state. Fields prefill from the loaded account on
   // onBeginEdit; Cancel discards.
   const [editing, setEditing] = useState(false);
@@ -75,6 +82,10 @@ export default function AccountDetailPage() {
       .then((account) => {
         if (cancelledRef?.current) return;
         setState({ kind: 'found', account });
+        // Drop any cached credential so the reveal/edit re-fetches for the
+        // now-current account.
+        setCredPassword(null);
+        setShowPassword(false);
       })
       .catch((err: unknown) => {
         if (cancelledRef?.current) return;
@@ -136,14 +147,54 @@ export default function AccountDetailPage() {
     }
   };
 
-  const onBeginEdit = () => {
+  // Fetch-once cache for the plaintext password. Returns the already-loaded
+  // value on subsequent calls so reveal + edit share a single round-trip.
+  const ensureCredentials = async (accountId: number): Promise<string> => {
+    if (credPassword !== null) return credPassword;
+    setCredLoading(true);
+    try {
+      const { password } = await accountsApi.credentials(accountId);
+      setCredPassword(password);
+      return password;
+    } finally {
+      setCredLoading(false);
+    }
+  };
+
+  const onToggleShowPassword = async () => {
+    if (state.kind !== 'found') return;
+    if (!showPassword) {
+      try {
+        await ensureCredentials(state.account.id);
+      } catch (err) {
+        setFlash({
+          kind: 'err',
+          text: err instanceof Error ? err.message : 'Failed to load password',
+        });
+        return;
+      }
+    }
+    setShowPassword((v) => !v);
+  };
+
+  const onBeginEdit = async () => {
     if (state.kind !== 'found') return;
     const a = state.account;
     setEditServerUrl(a.serverUrl);
     setEditUsername(a.username);
-    setEditPassword(a.password);
     setEditNickname(a.nickname);
     setFlash(null);
+    let pw: string;
+    try {
+      pw = await ensureCredentials(a.id);
+    } catch (err) {
+      setFlash({
+        kind: 'err',
+        text: err instanceof Error ? err.message : 'Failed to load password for editing',
+      });
+      return;
+    }
+    setEditPassword(pw);
     setEditing(true);
   };
 
@@ -269,8 +320,8 @@ export default function AccountDetailPage() {
                     <dd>
                       <span className="password-field">
                         <input
-                          type={showPassword ? 'text' : 'password'}
-                          value={account.password}
+                          type="text"
+                          value={showPassword && credPassword !== null ? credPassword : '••••••••'}
                           readOnly
                           aria-label="Password (read-only)"
                           className="password-field__input"
@@ -278,10 +329,11 @@ export default function AccountDetailPage() {
                         <button
                           type="button"
                           className="btn btn--ghost btn--sm"
-                          onClick={() => setShowPassword((v) => !v)}
+                          onClick={onToggleShowPassword}
+                          disabled={credLoading}
                           title={showPassword ? 'Hide password' : 'Show password'}
                         >
-                          {showPassword ? 'Hide' : 'Show'}
+                          {credLoading ? '…' : showPassword ? 'Hide' : 'Show'}
                         </button>
                       </span>
                     </dd>

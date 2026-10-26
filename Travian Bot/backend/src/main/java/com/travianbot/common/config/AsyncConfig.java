@@ -13,9 +13,15 @@ import java.util.concurrent.Executor;
  * <p>
  * {@code botExecutor} is the thread pool for long-running bot work (Playwright sessions, periodic scans).
  * One browser/account is expensive; keep the pool small and rely on per-account queues for ordering.
+ * <p>
+ * {@code proxyTargetClass = true} forces CGLIB (subclass) proxies for {@code @Async} beans. Without
+ * it, a notifier that implements an interface (e.g. {@code DiscordNotifier implements EventNotifier})
+ * gets a JDK dynamic proxy typed only as the interface, so injecting it by its concrete class — which
+ * the notifier's own settings controller does for {@code sendTest()} — fails at startup. Subclass
+ * proxies keep both the concrete type and the interface, so autowiring by either still resolves.
  */
 @Configuration
-@EnableAsync
+@EnableAsync(proxyTargetClass = true)
 @EnableScheduling
 public class AsyncConfig {
 

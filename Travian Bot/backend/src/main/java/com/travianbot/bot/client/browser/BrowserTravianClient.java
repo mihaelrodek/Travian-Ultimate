@@ -9,6 +9,7 @@ import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.PlaywrightException;
 import com.microsoft.playwright.options.Cookie;
 import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.Proxy;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import com.travianbot.bot.client.TravianClient;
 import com.travianbot.bot.client.TravianSession;
@@ -75,6 +76,12 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
     private final TravianSession session;
     private final boolean headless;
     private final HumanDelay humanDelay;
+    /** Optional Playwright proxy applied at Chromium launch; null = direct connection. */
+    private final Proxy proxy;
+    /** Owning account id — used to key the per-account rate limiter. Null for the bare test constructors. */
+    private final Long accountId;
+    /** Optional per-account action rate limiter, consulted before every browser action. Null = unlimited. */
+    private final ActionRateLimiter rateLimiter;
 
     private Playwright playwright;
     private Browser browser;
@@ -89,14 +96,41 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
         this(session, headless, new HumanDelay(() -> new HumanDelay.Range(0, 0)));
     }
 
+    public BrowserTravianClient(TravianSession session, boolean headless, HumanDelay humanDelay) {
+        this(session, headless, humanDelay, null);
+    }
+
+    public BrowserTravianClient(TravianSession session, boolean headless, HumanDelay humanDelay, Proxy proxy) {
+        this(session, headless, humanDelay, proxy, null, null);
+    }
+
     /**
      * Primary constructor. {@code humanDelay} supplies the random pre-action pause — see the
-     * class-level javadoc on {@link HumanDelay} for why this matters.
+     * class-level javadoc on {@link HumanDelay} for why this matters. {@code proxy} is the
+     * Playwright proxy for the whole browser (null = direct); it must be set at construction
+     * because Chromium can't change proxies after launch. {@code accountId} + {@code rateLimiter}
+     * enforce the per-account actions-per-minute cap (both null = no rate limiting, used by tests).
      */
-    public BrowserTravianClient(TravianSession session, boolean headless, HumanDelay humanDelay) {
+    public BrowserTravianClient(TravianSession session, boolean headless, HumanDelay humanDelay,
+                                Proxy proxy, Long accountId, ActionRateLimiter rateLimiter) {
         this.session = session;
         this.headless = headless;
         this.humanDelay = humanDelay;
+        this.proxy = proxy;
+        this.accountId = accountId;
+        this.rateLimiter = rateLimiter;
+    }
+
+    /**
+     * Single pre-action gate: enforce the per-account rate cap (may block), then the
+     * randomised humanization pause. Every browser action routes through here, so both
+     * anti-detection primitives apply uniformly with one call site to reason about.
+     */
+    private void preAction() {
+        if (rateLimiter != null && accountId != null) {
+            rateLimiter.acquire(accountId);
+        }
+        humanDelay.beforeAction();
     }
 
     @Override
@@ -113,7 +147,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
     @Override
     public String get(String url) {
         ensureStarted();
-        humanDelay.beforeAction();
+        preAction();
         page.navigate(url, new Page.NavigateOptions().setTimeout(NAVIGATION_TIMEOUT_MS));
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
         return page.content();
@@ -134,7 +168,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
      */
     public String getWaitingFor(String url, String cssSelector, int timeoutMs) {
         ensureStarted();
-        humanDelay.beforeAction();
+        preAction();
         page.navigate(url, new Page.NavigateOptions().setTimeout(NAVIGATION_TIMEOUT_MS));
         try {
             page.waitForLoadState(LoadState.DOMCONTENTLOADED);
@@ -188,7 +222,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
             try {
                 ElementHandle link = page.querySelector(sel);
                 if (link != null && link.isVisible()) {
-                    humanDelay.beforeAction();
+                    preAction();
                     link.click();
                     log.info("Clicked ingame logout via {}", sel);
                     try {
@@ -209,7 +243,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
         try {
             String url = (serverUrl == null ? session.serverUrl() : serverUrl) + "/logout.php";
             log.info("No logout link found — navigating directly to {}", url);
-            humanDelay.beforeAction();
+            preAction();
             page.navigate(url, new Page.NavigateOptions().setTimeout(NAVIGATION_TIMEOUT_MS));
             try {
                 page.waitForLoadState(LoadState.DOMCONTENTLOADED);
@@ -229,7 +263,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
         ensureStarted();
 
         log.info("Navigating to {}", session.serverUrl());
-        humanDelay.beforeAction();
+        preAction();
         try {
             page.navigate(session.serverUrl(), new Page.NavigateOptions().setTimeout(NAVIGATION_TIMEOUT_MS));
             page.waitForLoadState(LoadState.DOMCONTENTLOADED);
@@ -294,7 +328,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
         ensureStarted();
         String url = serverUrl + "/build.php?gid=16&tt=99&id=" + travianListId;
         log.info("Opening farmlist {} for send: {}", travianListId, url);
-        humanDelay.beforeAction();
+        preAction();
         page.navigate(url, new Page.NavigateOptions().setTimeout(NAVIGATION_TIMEOUT_MS));
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
 
@@ -304,7 +338,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
             ElementHandle checkAll = page.querySelector("input.checkAll, input[name=\"checkAll\"]");
             if (checkAll != null && checkAll.isVisible()) {
                 if (!checkAll.isChecked()) {
-                    humanDelay.beforeAction();
+                    preAction();
                     checkAll.check();
                 }
                 checked = -1; // "all"
@@ -321,7 +355,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
                     if (cb.isVisible() && !cb.isChecked()) {
                         // Per-target humanization is deliberate — a batch of 30 checkboxes
                         // flipped in under 50 ms is the clearest "I'm a bot" fingerprint.
-                        humanDelay.beforeAction();
+                        preAction();
                         cb.check();
                         checked++;
                     } else if (cb.isChecked()) {
@@ -347,7 +381,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
             try {
                 ElementHandle btn = page.querySelector(sel);
                 if (btn != null && btn.isVisible() && btn.isEnabled()) {
-                    humanDelay.beforeAction();
+                    preAction();
                     btn.click();
                     log.info("Clicked send button via {}", sel);
                     submitted = true;
@@ -437,7 +471,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
             if (!switched) {
                 // Last resort: URL-level tab nav. Keeps the bot functional on
                 // skins where the tab link uses JS-only handlers.
-                humanDelay.beforeAction();
+                preAction();
                 page.navigate(serverUrl + "/build.php?gid=17&t=5",
                         new Page.NavigateOptions().setTimeout(NAVIGATION_TIMEOUT_MS));
                 try { page.waitForLoadState(LoadState.DOMCONTENTLOADED); } catch (PlaywrightException ignored) {}
@@ -477,7 +511,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
             try {
                 ElementHandle btn = page.querySelector(sel);
                 if (btn != null && btn.isVisible() && btn.isEnabled()) {
-                    humanDelay.beforeAction();
+                    preAction();
                     btn.click();
                     log.info("Submitted NPC trade via {} — targets w={} c={} i={} cr={}",
                             sel, targetWood, targetClay, targetIron, targetCrop);
@@ -517,7 +551,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
             try {
                 ElementHandle link = page.querySelector(sel);
                 if (link != null && link.isVisible()) {
-                    humanDelay.beforeAction();
+                    preAction();
                     link.click();
                     try { page.waitForLoadState(LoadState.DOMCONTENTLOADED); } catch (PlaywrightException ignored) {}
                     log.debug("Clicked NPC tab via {}", sel);
@@ -554,7 +588,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
         ensureStarted();
         String url = serverUrl + "/hero/attributes";
         log.info("Spending {} hero points into {}: {}", points, attributeField, url);
-        humanDelay.beforeAction();
+        preAction();
         page.navigate(url, new Page.NavigateOptions().setTimeout(NAVIGATION_TIMEOUT_MS));
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
 
@@ -587,7 +621,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
             try {
                 ElementHandle btn = page.querySelector(sel);
                 if (btn != null && btn.isVisible() && btn.isEnabled()) {
-                    humanDelay.beforeAction();
+                    preAction();
                     btn.click();
                     log.info("Submitted hero points via {}", sel);
                     try {
@@ -624,7 +658,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
         ensureStarted();
         String url = serverUrl + "/build.php?id=" + slotId;
         log.info("Opening building slot {} for upgrade: {}", slotId, url);
-        humanDelay.beforeAction();
+        preAction();
         page.navigate(url, new Page.NavigateOptions().setTimeout(NAVIGATION_TIMEOUT_MS));
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
 
@@ -678,7 +712,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
                     continue;
                 }
 
-                humanDelay.beforeAction();
+                preAction();
                 btn.click();
                 log.info("Clicked upgrade button via {}", sel);
                 try {
@@ -783,10 +817,18 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
 
         try {
             playwright = Playwright.create();
-            browser = playwright.chromium().launch(
-                    new BrowserType.LaunchOptions().setHeadless(headless)
-            );
-            context = browser.newContext();
+            BrowserType.LaunchOptions options = new BrowserType.LaunchOptions().setHeadless(headless);
+            if (proxy != null) options.setProxy(proxy);
+            browser = playwright.chromium().launch(options);
+
+            // Per-session fingerprint (P2.9) — a fresh UA + viewport each time the
+            // browser is created so repeated logins don't present identical metadata.
+            BrowserFingerprint fp = BrowserFingerprint.random();
+            context = browser.newContext(new Browser.NewContextOptions()
+                    .setUserAgent(fp.userAgent())
+                    .setViewportSize(fp.width(), fp.height()));
+            log.debug("Browser fingerprint: UA='{}' viewport={}x{}",
+                    fp.userAgent(), fp.width(), fp.height());
             page = context.newPage();
             page.setDefaultTimeout(NAVIGATION_TIMEOUT_MS);
         } catch (PlaywrightException e) {
@@ -856,7 +898,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
             try {
                 ElementHandle btn = page.querySelector(selector);
                 if (btn != null && btn.isVisible() && btn.isEnabled()) {
-                    humanDelay.beforeAction();
+                    preAction();
                     btn.click();
                     log.info("Submitted login form via button selector {}", selector);
                     return;
@@ -868,7 +910,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
         // Fallback: press Enter on the password field — works on every Travian form.
         log.info("No login button matched; pressing Enter on {} as fallback", passwordSelector);
         try {
-            humanDelay.beforeAction();
+            preAction();
             page.press(passwordSelector, "Enter");
         } catch (PlaywrightException e) {
             throw new LoginFailedException(
@@ -927,7 +969,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
      */
     private void humanType(ElementHandle el, String text) {
         if (text == null) text = "";
-        humanDelay.beforeAction();
+        preAction();
         el.click();
         // Clear any pre-filled value. Cmd on macOS, Control everywhere else —
         // Playwright translates "Meta+a" portably but "Control+a" works on
@@ -1014,7 +1056,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
             try {
                 ElementHandle link = page.querySelector(selector);
                 if (link != null && link.isVisible()) {
-                    humanDelay.beforeAction();
+                    preAction();
                     link.click();
                     try {
                         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
@@ -1030,7 +1072,7 @@ public class BrowserTravianClient implements TravianClient, AutoCloseable {
                 log.debug("Click-nav via {} failed: {}", selector, e.getMessage());
             }
         }
-        humanDelay.beforeAction();
+        preAction();
         page.navigate(targetUrl, new Page.NavigateOptions().setTimeout(NAVIGATION_TIMEOUT_MS));
         try {
             page.waitForLoadState(LoadState.DOMCONTENTLOADED);

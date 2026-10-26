@@ -3,18 +3,26 @@ package com.travianbot.botlog.service;
 import com.travianbot.account.domain.Account;
 import com.travianbot.account.event.AccountDeletingEvent;
 import com.travianbot.account.persistence.AccountRepository;
+import com.travianbot.botlog.api.dto.BotEventResponse;
 import com.travianbot.botlog.domain.BotEvent;
 import com.travianbot.botlog.domain.BotEventOutcome;
 import com.travianbot.botlog.persistence.BotEventRepository;
+import com.travianbot.stream.SseEventBroadcaster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Records and serves bot activity events. Write-mostly: every interesting
@@ -46,10 +54,13 @@ public class BotEventService {
 
     private final BotEventRepository repository;
     private final AccountRepository accountRepository;
+    private final SseEventBroadcaster broadcaster;
 
-    public BotEventService(BotEventRepository repository, AccountRepository accountRepository) {
+    public BotEventService(BotEventRepository repository, AccountRepository accountRepository,
+                           SseEventBroadcaster broadcaster) {
         this.repository = repository;
         this.accountRepository = accountRepository;
+        this.broadcaster = broadcaster;
     }
 
     /**
@@ -75,7 +86,10 @@ public class BotEventService {
                 return;
             }
             String trimmedAction = action.length() > 64 ? action.substring(0, 64) : action;
-            repository.save(new BotEvent(account, villageId, trimmedAction, outcome, message));
+            BotEvent saved = repository.save(new BotEvent(account, villageId, trimmedAction, outcome, message));
+            // Push to any open UI stream once this (REQUIRES_NEW) write commits.
+            // DTO is built now, while the entity is attached, then sent after commit.
+            broadcaster.broadcastAfterCommit("bot-event", BotEventResponse.from(saved));
         } catch (RuntimeException e) {
             // The log existing is not worth a secondary failure — swallow and trace.
             log.warn("Failed to record bot-event action={} account={} outcome={}: {}",
@@ -83,21 +97,41 @@ public class BotEventService {
         }
     }
 
+    /**
+     * Filtered, paginated list for the Log screen. Every filter is optional
+     * and they compose with AND; {@code q} does a case-insensitive substring
+     * match against both the message and the action code so the user can
+     * type either "overflow" or "SCRAPE" into the same box.
+     */
     @Transactional(readOnly = true)
-    public Page<BotEvent> list(Long accountId, BotEventOutcome outcome, int page, int size) {
+    public Page<BotEvent> list(Long accountId, BotEventOutcome outcome,
+                               Instant from, Instant to, String q,
+                               int page, int size) {
         int safeSize = Math.max(1, Math.min(size, MAX_PAGE_SIZE));
         int safePage = Math.max(0, page);
-        Pageable pageable = PageRequest.of(safePage, safeSize);
-        if (accountId != null && outcome != null) {
-            return repository.findAllByAccountIdAndOutcomeOrderByCreatedAtDesc(accountId, outcome, pageable);
-        }
+        Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        List<Specification<BotEvent>> specs = new ArrayList<>();
         if (accountId != null) {
-            return repository.findAllByAccountIdOrderByCreatedAtDesc(accountId, pageable);
+            specs.add((root, query, cb) -> cb.equal(root.get("account").get("id"), accountId));
         }
         if (outcome != null) {
-            return repository.findAllByOutcomeOrderByCreatedAtDesc(outcome, pageable);
+            specs.add((root, query, cb) -> cb.equal(root.get("outcome"), outcome));
         }
-        return repository.findAllByOrderByCreatedAtDesc(pageable);
+        if (from != null) {
+            specs.add((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("createdAt"), from));
+        }
+        if (to != null) {
+            specs.add((root, query, cb) -> cb.lessThanOrEqualTo(root.get("createdAt"), to));
+        }
+        if (q != null && !q.isBlank()) {
+            String like = "%" + q.trim().toLowerCase() + "%";
+            specs.add((root, query, cb) -> cb.or(
+                    cb.like(cb.lower(root.get("message")), like),
+                    cb.like(cb.lower(root.get("action")), like)
+            ));
+        }
+        return repository.findAll(Specification.allOf(specs), pageable);
     }
 
     /**

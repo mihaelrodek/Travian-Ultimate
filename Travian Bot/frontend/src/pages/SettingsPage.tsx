@@ -1,12 +1,15 @@
 import Card from '../components/Card';
+import GlassHeader from '../components/GlassHeader';
 import GeneralSettingsForm from '../features/settings/GeneralSettingsForm';
 
 export default function SettingsPage() {
   return (
     <div className="stack">
       <div>
-        <h1 className="page__title">Settings</h1>
-        <p className="page__subtitle">App-wide preferences. Per-account settings live on each account's page.</p>
+        <GlassHeader
+        title="Postavke"
+        subtitle="Tema, humanizacija, scraping."
+      />
       </div>
 
       <Card title="General">

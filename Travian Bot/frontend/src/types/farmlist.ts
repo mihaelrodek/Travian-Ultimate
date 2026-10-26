@@ -65,3 +65,51 @@ export interface ScrapeFarmlistsResponse {
 export interface SendAllFarmlistsResponse {
   listsSent: number;
 }
+
+/**
+ * Per-target running metrics rolled up by the backend analyzer.
+ * Targets that have never been raided come back with zero defaults so the
+ * UI always sees a row per target — see {@code FarmlistTargetMetricResponse}.
+ */
+export interface FarmlistTargetMetric {
+  farmlistTargetId: number;
+  targetX: number;
+  targetY: number;
+  targetName: string | null;
+  totalRaids: number;
+  totalResourcesLooted: number;
+  totalOurTroopsLost: number;
+  consecutiveLossRaids: number;
+  /** GREEN — farming healthily, YELLOW — thin/losses building, RED — prune candidate. */
+  trafficLight: 'GREEN' | 'YELLOW' | 'RED';
+  prunCandidate: boolean;
+  lastRaidAt: string | null;
+  lastFullHaulAt: string | null;
+}
+
+/** Mirror of the backend RaidReport row — what came back from a single raid. */
+export interface RaidReport {
+  id: number;
+  accountId: number;
+  farmlistId: number;
+  farmlistTargetId: number | null;
+  travianReportId: number;
+  raidLaunchedAt: string | null;
+  raidReturnedAt: string;
+  targetX: number;
+  targetY: number;
+  targetVillageName: string | null;
+  woodLooted: number;
+  clayLooted: number;
+  ironLooted: number;
+  cropLooted: number;
+  carryCapacityTotal: number | null;
+  wasFullHaul: boolean;
+  ourTroopsLost: number;
+  enemyTroopsLost: number;
+  outcome: 'VICTORY_NO_LOSS' | 'VICTORY_WITH_LOSS' | 'DEFEAT' | 'UNKNOWN';
+}
+
+export interface ScrapeRaidReportsResponse {
+  scraped: number;
+}

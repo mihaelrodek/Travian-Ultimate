@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../components/Card';
+import GlassHeader from '../components/GlassHeader';
 import { useCurrentAccount } from '../hooks/useCurrentAccount';
+import { useLiveEvent } from '../features/events/EventStreamContext';
 import { botLogApi } from '../api/botLog';
 import { villagesApi } from '../api/villages';
 import {
@@ -46,6 +48,21 @@ export default function BotLogPage() {
   const [outcome, setOutcome] = useState<BotEventOutcome | 'all'>('all');
   const [villages, setVillages] = useState<Village[]>([]);
 
+  // Free-text search (matches message + action code, case-insensitive).
+  // `search` follows the input keystroke-by-keystroke; `searchDebounced` is
+  // what actually drives the fetch, so we don't fire a request per keypress.
+  const [search, setSearch] = useState('');
+  const [searchDebounced, setSearchDebounced] = useState('');
+  // Date range, kept in the <input type="datetime-local"> string format
+  // ("2026-07-05T14:30", local clock). Converted to ISO instants at fetch time.
+  const [fromLocal, setFromLocal] = useState('');
+  const [toLocal, setToLocal] = useState('');
+
+  useEffect(() => {
+    const handle = window.setTimeout(() => setSearchDebounced(search), 400);
+    return () => window.clearTimeout(handle);
+  }, [search]);
+
   // Track the in-flight account id so the response from a stale fetch can't
   // clobber state after the user switches accounts mid-request.
   const accountRef = useRef<number | null>(accountId);
@@ -86,12 +103,15 @@ export default function BotLogPage() {
     }
     setLoading(true);
     try {
-      const resp = await botLogApi.list(
+      const resp = await botLogApi.list({
         accountId,
-        outcome === 'all' ? undefined : outcome,
-        nextPage,
-        PAGE_SIZE,
-      );
+        outcome: outcome === 'all' ? undefined : outcome,
+        from: toInstant(fromLocal),
+        to: toInstant(toLocal),
+        q: searchDebounced || undefined,
+        page: nextPage,
+        size: PAGE_SIZE,
+      });
       if (accountRef.current !== accountId) return; // stale
       setData(resp);
       setError(null);
@@ -102,13 +122,13 @@ export default function BotLogPage() {
     }
   };
 
-  // Reset to page 0 whenever the filter or account changes — a page number
+  // Reset to page 0 whenever a filter or the account changes — a page number
   // from the previous view is likely out of range for the new one.
   useEffect(() => {
     setPage(0);
     void load(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountId, outcome]);
+  }, [accountId, outcome, searchDebounced, fromLocal, toLocal]);
 
   // Background poll. Only active when the user is on page 0 — deeper pages
   // are historical and wouldn't benefit from polling, and polling them would
@@ -120,7 +140,22 @@ export default function BotLogPage() {
     }, POLL_INTERVAL_MS);
     return () => window.clearInterval(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountId, page, outcome]);
+  }, [accountId, page, outcome, searchDebounced, fromLocal, toLocal]);
+
+  // Live push (NOT4): when the backend records a bot-event for the account
+  // we're viewing and we're on the newest page, refresh — coalescing bursts
+  // (a "scrape all" logs many events at once) into one fetch per 400ms. The
+  // 10s poll above stays as a fallback if the stream drops.
+  const liveRefreshTimer = useRef<number | null>(null);
+  useLiveEvent('bot-event', (data) => {
+    const evt = data as { accountId?: number } | null;
+    if (accountId == null || page !== 0 || evt?.accountId !== accountId) return;
+    if (liveRefreshTimer.current != null) return;
+    liveRefreshTimer.current = window.setTimeout(() => {
+      liveRefreshTimer.current = null;
+      void load(0);
+    }, 400);
+  });
 
   const onPrev = () => {
     if (page <= 0) return;
@@ -140,11 +175,10 @@ export default function BotLogPage() {
   return (
     <div className="stack">
       <div>
-        <h1 className="page__title">Log</h1>
-        <p className="page__subtitle">
-          Everything the bot has done on this account — newest first. Useful for
-          spotting why a scrape or farm run didn't go the way you expected.
-        </p>
+        <GlassHeader
+        title="Log"
+        subtitle="Bot aktivnost: scrape, login, send, build."
+      />
       </div>
 
       {accountId == null && !accountsLoading && (
@@ -157,7 +191,7 @@ export default function BotLogPage() {
 
       {accountId != null && (
         <Card title="Activity">
-          <div className="toolbar">
+          <div className="toolbar" style={{ flexWrap: 'wrap', rowGap: '0.5rem' }}>
             <label className="toolbar__label">Outcome</label>
             <select
               value={outcome}
@@ -168,6 +202,42 @@ export default function BotLogPage() {
                 <option key={o} value={o}>{o}</option>
               ))}
             </select>
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search message or action…"
+              aria-label="Search log messages and action codes"
+              style={{ minWidth: '14rem' }}
+            />
+            <label className="toolbar__label">From</label>
+            <input
+              type="datetime-local"
+              value={fromLocal}
+              onChange={(e) => setFromLocal(e.target.value)}
+              aria-label="Only events after"
+            />
+            <label className="toolbar__label">To</label>
+            <input
+              type="datetime-local"
+              value={toLocal}
+              onChange={(e) => setToLocal(e.target.value)}
+              aria-label="Only events before"
+            />
+            {(search !== '' || fromLocal !== '' || toLocal !== '' || outcome !== 'all') && (
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                onClick={() => {
+                  setSearch('');
+                  setFromLocal('');
+                  setToLocal('');
+                  setOutcome('all');
+                }}
+              >
+                Clear filters
+              </button>
+            )}
             <button
               type="button"
               className="btn btn--ghost btn--sm"
@@ -243,6 +313,18 @@ export default function BotLogPage() {
       )}
     </div>
   );
+}
+
+/**
+ * Convert a <input type="datetime-local"> value ("2026-07-05T14:30", local
+ * clock, possibly half-typed) to an ISO-8601 UTC instant for the API.
+ * Returns undefined for empty or not-yet-valid input so a partially typed
+ * date doesn't produce a garbage filter.
+ */
+function toInstant(local: string): string | undefined {
+  if (local === '') return undefined;
+  const d = new Date(local);
+  return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
 }
 
 function BotEventRow({

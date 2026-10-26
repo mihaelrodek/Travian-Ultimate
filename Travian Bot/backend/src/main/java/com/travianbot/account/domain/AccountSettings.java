@@ -90,6 +90,19 @@ public class AccountSettings {
     @Column(name = "proxy_password", length = 512)
     private String proxyPassword;
 
+    // ---------- Browser ----------
+    /**
+     * Run this account's Chromium without a visible window. Off by default so a
+     * fresh user sees the bot working (and can solve the occasional captcha in
+     * the same window). Turn on for background/headless operation once the
+     * account is stable. Read by {@code BrowserSessionManager} when it launches
+     * the session — takes effect on the next login/restart, since Chromium's
+     * headless mode is fixed at launch.
+     */
+    @Column(name = "headless", nullable = false,
+            columnDefinition = "BOOLEAN NOT NULL DEFAULT FALSE")
+    private boolean headless = false;
+
     // ---------- Schedule ----------
     @OneToMany(mappedBy = "accountSettings", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<ActiveWindow> activeWindows = new ArrayList<>();
@@ -130,6 +143,9 @@ public class AccountSettings {
     public void setProxyUsername(String proxyUsername) { this.proxyUsername = proxyUsername; }
     public String getProxyPassword() { return proxyPassword; }
     public void setProxyPassword(String proxyPassword) { this.proxyPassword = proxyPassword; }
+
+    public boolean isHeadless() { return headless; }
+    public void setHeadless(boolean headless) { this.headless = headless; }
 
     public List<ActiveWindow> getActiveWindows() { return activeWindows; }
 

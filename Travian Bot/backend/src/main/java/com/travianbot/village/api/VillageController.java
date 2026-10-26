@@ -4,12 +4,14 @@ import com.travianbot.bot.scraper.ScrapingService;
 import com.travianbot.village.api.dto.QueueUpdateRequest;
 import com.travianbot.village.api.dto.VillageRequest;
 import com.travianbot.village.api.dto.VillageResponse;
+import com.travianbot.village.domain.VillageType;
 import com.travianbot.village.service.VillageService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -53,6 +55,24 @@ public class VillageController {
     public VillageResponse update(@PathVariable Long id, @Valid @RequestBody VillageRequest request) {
         return service.updateDto(id, request);
     }
+
+    /**
+     * Partial update of the user-applied classification: TS level + village
+     * type. Body shape: {@code { "tsLevel": int|null, "villageType":
+     * "OFF_HAMMER"|... |null }}. Either field may be omitted (null) to clear.
+     * Used by the Village troops page's inline editors so the user can tag
+     * villages without touching the rest of the row.
+     */
+    @PatchMapping("/{id}/classification")
+    public VillageResponse classify(@PathVariable Long id,
+                                    @RequestBody ClassificationRequest body) {
+        Integer tsLevel = body == null ? null : body.tsLevel();
+        VillageType type = body == null ? null : body.villageType();
+        return service.updateClassificationDto(id, tsLevel, type);
+    }
+
+    /** Tiny request envelope for {@link #classify}. Both fields may be null. */
+    public record ClassificationRequest(Integer tsLevel, VillageType villageType) {}
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {

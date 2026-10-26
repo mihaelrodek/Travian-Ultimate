@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../components/Card';
+import GlassHeader from '../components/GlassHeader';
 import { useCurrentAccount } from '../hooks/useCurrentAccount';
 import { notesApi } from '../api/notes';
 import type { Note } from '../types/note';
@@ -45,8 +46,10 @@ export default function NotesListPage() {
     <div className="stack">
       <div className="page__header">
         <div>
-          <h1 className="page__title">Notes</h1>
-          <p className="page__subtitle">Free-form scratchpad for the active account.</p>
+          <GlassHeader
+        title="Bilješke"
+        subtitle="Slobodne bilješke vezane za račun."
+      />
         </div>
         {accountId != null && <Link to="/notes/new" className="btn btn--primary">+ New note</Link>}
       </div>
